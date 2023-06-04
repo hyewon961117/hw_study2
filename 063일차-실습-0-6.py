@@ -1,10 +1,12 @@
+import os
+import sys
 import pymysql
 
 config ={
     'host':'127.0.0.1',
     'user':'root',
     'passwd':'0000',
-    'database':'work',
+    'database':'test_db',
     'port':3306,
     'charset':'utf8',
     'use_unicode':True
@@ -41,6 +43,7 @@ finally:
 
 # 상품등록 함수
 def insert_info():
+    os.system('cls')
     conn = pymysql.connect(**config)
     cursor = conn.cursor()
     
@@ -70,6 +73,7 @@ def insert_info():
 
 # 모든 레코드 조회 함수
 def all_select_info():
+    os.system('cls')
     conn = pymysql.connect(**config)
     cursor = conn.cursor()
     
@@ -94,6 +98,7 @@ def all_select_info():
     
 # 단일 레코드 조회 함수
 def one_select_info():
+    os.system('cls')
     conn = pymysql.connect(**config)
     cursor = conn.cursor()
     
@@ -121,13 +126,31 @@ def one_select_info():
         conn.close()
         
 while True :
+    print("-----------------------------------")
     print("===회원관리===")
     
-    menu_list = ["회원등록:1", "전체회원목록:2", "개별회원조회:3", "종료:q"]
+    menu_list = ["회원등록:1", "전체회원목록:2", "개별회원조회:3", "종료:0"]
     
-    for menu in range(len(menu_list)):
+    for menu in menu_list:
         print(menu)
     
-    code = int(input("수행할 작업의 번호를 입력하세요 : "))
+    print("")
+    code = int(input("=> 수행할 작업의 번호를 입력하세요 : "))
+    print("")
+
+    if code == 1:
+        insert_info()
     
+    elif code == 2:
+        all_select_info()
+
+    elif code == 3:
+        one_select_info()
+    
+    elif code == 0:
+        print("서비스가 종료되었습니다. 감사합니다.")
+        break
+    
+    else : 
+        print('잘못 입력했습니다.')
     
