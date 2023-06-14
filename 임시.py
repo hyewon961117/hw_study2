@@ -1,12 +1,16 @@
-def inputValues():
-    in_name = input('상품명을 입력하세요 : ')
-    in_su = int(input('수량을 입력하세요 : '))
-    in_dan = int(input('단가를 입력하세요 : '))
-    return in_name, in_su, in_dan
+# jumin = input("주민등록번호 입력 : ")
 
-x, y, z = inputValues()
 
-print(x)
-print(y)
-print(z)
-print(in_name)
+# left = jumin.split("-")[0]
+# right = jumin.split("-")[1]
+
+# year = left[:2]
+# month = left[2:4]
+# day = left[4:]
+
+# year='19'+year
+
+# print(year, month, day)
+
+month_31 = list(map(lambda x: str(x),[1,3,5,7,8,10,12]))
+print(month_31)
