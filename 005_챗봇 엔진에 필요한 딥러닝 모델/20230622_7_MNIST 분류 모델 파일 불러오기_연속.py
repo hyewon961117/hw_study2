@@ -20,13 +20,13 @@ picks = [20]
 predict = model.predict_classes(X_test[picks])
 print('손글씨 이미지 예측값 : ', predict)
 
-# for i in range(10):
-#     plt.imshow(X_test[i], cmap='gray')
-#     plt.show()
+for i in range(10):
+    plt.imshow(X_test[i], cmap='gray')
+    plt.show()
      
-#     picks = [i]
-#     predict = np.argmax(model.predict(X_test[picks]), axis=1)
-#     image = model.predict(X_test[picks])
+    picks = [i]
+    predict = np.argmax(model.predict(X_test[picks]), axis=1)
+    image = model.predict(X_test[picks])
     
-#     print('손글씨 이미지 예측값 : ', predict)
-#     print('손글씨 이미지 예측값 : ', image)
+    print('손글씨 이미지 예측값 : ', predict)
+    print('손글씨 이미지 예측값 : ', image)
