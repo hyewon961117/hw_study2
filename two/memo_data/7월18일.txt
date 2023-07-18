@@ -1,0 +1,950 @@
+인공신경망
+	sklearn
+	tensorflow
+
+오픈대화방 참여
+	https://open.kakao.com/o/gLjc5yuf
+
+강의자료 홈페이지 회원가입
+	http://edu.vitasilvar.com
+
+	epub
+	calibre ebook viewer
+
+
+python 3.9.13 설치
+
+https://www.python.org/ftp/python/3.9.13/python-3.9.13-amd64.exe
+
+	visual studio code
+
+
+	tensorflow	=> keras
+	pytorch
+
+CUDA Toolkit 11.7.1
+        https://developer.nvidia.com/cuda-toolkit-archive
+	Windows, x86_64 , 10, exe (local)
+
+cuDNN SDK - 회원가입 필요
+	CUDA와 호환되는 버전으로 설치
+	https://developer.nvidia.com/rdp/cudnn-archive
+	Download cuDNN v8.6.0 (October 3rd, 2022), for CUDA 11.x
+	압축 해제 후 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.7 디렉토리에 붙여넣기(덮어쓰기)
+
+	환경변수 path 추가
+	C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.7\include
+	C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.7\lib
+
+
+
+
+
+	input layer	hidden layer	output layer
+	입력층		은닉층		출력층
+
+	node
+	노드
+
+	o weight 가중치
+	o
+	o
+	o
+	o
+
+	bias 편향
+
+	path 추가
+	C:\python
+	C:\python\Scripts
+
+
+ModuleNotFoundError: No module named 'graphviz'
+
+
+	pip install graphviz
+
+ExecutableNotFound: failed to execute WindowsPath('dot'), make sure the Graphviz executables are on your systems' PATH
+
+
+from sklearn.datasets import make_moons
+# noise 표준편차
+X, y = make_moons(n_samples=100, noise=0.25, random_state=3)
+			샘플수    표준편차
+
+	random seed
+		기준값
+
+
+
+from sklearn.model_selection import train_test_split
+#stratify=y :학습용 데이터와 검증용 데이터에서 각각의 타겟값들이 동일한 비율로 나타나도록 함
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, stratify=y, random_state=0)
+	검증용 	   0:1 동수
+
+
+	학습용	검증용
+	train	test
+
+	100개
+
+		학습용	검증용
+		80	20
+	0	40	10
+	1	40	10
+
+
+
+		0	1	합계
+		60	20	80
+
+		20	20	40	under sampling
+		60	60	120	over sampling
+
+		교차검증
+		cross validation
+		데이터 100개
+
+		5세트	5 fold	3 fold
+
+		20	20	20	20	20
+		test
+			test
+				test
+					test
+						test
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		40	40	80
+
+			recall 재현율
+
+
+
+
+
+
+
+
+
+
+
+
+
+	과적합
+	over fitting
+
+	train	validation		test
+	6	2		2
+
+
+		조기학습종료
+
+
+
+
+from sklearn.neural_network import MLPClassifier
+model = MLPClassifier(random_state=0,max_iter=5000).fit(X_train, y_train)
+				최대반복횟수   학습
+#hidden_layer_sizes=(100,) , 은닉층에서 사용할 유닛수의 기본값 : 100
+#데이터가 매우 적은 상태이므로 100개를 쓰는 것보다는 줄이는 것이 좋다.
+#은닉유닛을 줄이면 모델의 복잡도는 낮아진다.
+print(model.score(X_train,y_train))
+print(model.score(X_test,y_test))
+
+	input		hidden
+	o		o
+
+	o
+
+
+from matplotlib import pyplot as plt
+mglearn.plots.plot_2d_separator(model, X_train, fill=True, alpha=.3)
+mglearn.discrete_scatter(X_train[:, 0], X_train[:, 1], y_train)
+plt.xlabel("class 0")
+plt.ylabel("class 1")
+
+
+
+# 은닉유닛을 10개로 줄이고 테스트
+model = MLPClassifier(random_state=0, hidden_layer_sizes=[10], max_iter=1000)
+					node 10개
+model.fit(X_train, y_train)
+print(model.score(X_train,y_train))
+print(model.score(X_test,y_test))
+
+# 10개의 유닛으로 된 두 개의 은닉층 [10,10]
+model = MLPClassifier(random_state=0,hidden_layer_sizes=[10, 10], max_iter=500)
+model.fit(X_train, y_train)
+print(model.score(X_train,y_train))
+print(model.score(X_test,y_test))
+
+# 100개의 유닛으로 된 세 개의 은닉층 [100,100,100]
+model = MLPClassifier(random_state=0,hidden_layer_sizes=[100,100,100], max_iter=500)
+model.fit(X_train, y_train)
+print(model.score(X_train,y_train))
+print(model.score(X_test,y_test))
+mglearn.plots.plot_2d_separator(model, X_train, fill=True, alpha=.3)
+mglearn.discrete_scatter(X_train[:, 0], X_train[:, 1], y_train)
+plt.xlabel("class 0")
+plt.ylabel("class 1")
+
+	score
+	분류 정확도
+
+
+
+
+
+from sklearn.metrics import confusion_matrix
+pred=model.predict(X_test)
+cm=confusion_matrix(y_test, pred)
+cm
+
+array([[ 7,  3],
+       [ 0, 10]], dtype=int64)
+
+	실제
+
+출력	0	1
+0	7	3
+1	0	10
+
+
+
+	분류	classification	객관식		정확도 accracy
+						roc curve
+
+	회귀	regression	주관식		mse, mae, rmse
+						r-squared 0.0~1.0
+
+              	precision    recall  f1-score   support
+		모형	실제
+
+           0       	1.00      	0.70      0.82        10
+           1       	0.77      	1.00      0.87        10
+
+    accuracy                          		 0.85        20
+   macro avg       0.88      0.85      0.85        20
+weighted avg       0.88      0.85      0.85        20
+
+
+
+
+
+
+
+
+from sklearn.neural_network import MLPClassifier  
+import mglearn 
+y=[0,0,0,1]
+model = MLPClassifier(random_state=0,max_iter=1000).fit(X, y)
+mglearn.plots.plot_2d_separator(model, X, fill=True, alpha=.3)  
+mglearn.discrete_scatter(X[:, 0], X[:, 1], y)
+plt.xlabel("class 0")  
+plt.ylabel("class 1")
+
+
+def AND(x1, x2):
+    x = np.array([x1, x2])
+    w = np.array([0.5, 0.5]) #가중치
+    b = -0.7 #절편(편향)
+    tmp = np.sum(w*x) + b
+    print(tmp)
+    if tmp <= 0:
+        return 0
+    else:
+        return 1
+
+for xs in [(0, 0), (1, 0), (0, 1), (1, 1)]:
+	개별 in 리스트
+    y = AND(xs[0], xs[1])
+    print(xs , " -> " , y)
+
+
+
+	input		hidden		output
+
+	입력값 x 가중치
+
+
+
+
+	input=>hidden 	relu	
+				x>0 => x, x<0 => 0
+			tanh	-1.0 ~ 1.0
+				순환신경망
+	output
+		linear	회귀분석			
+		sigmoid	0.0 ~ 1.0	이진분류
+		softmax	다분류
+
+
+#시그모이드 함수 : S자 모양의 함수
+import numpy as np
+import matplotlib.pylab as plt
+#np.exp() y=e의 x승
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))    
+
+X = np.arange(-5.0, 5.0, 0.1)
+	       시작 끝  간격
+y = sigmoid(X)
+plt.plot(X, y)
+plt.ylim(-0.1, 1.1)
+plt.show()
+#0,1이 아닌 연속적인 실수값을 출력함
+
+#ReLU 함수(Rectified Linear Unit)
+# 입력이 0보다 크면 그대로 출력, 0 이하이면 0을 출력
+import numpy as np
+import matplotlib.pylab as plt
+def relu(x):
+    return np.maximum(0, x)
+
+x = np.arange(-5.0, 5.0, 0.1)
+y = relu(x)
+plt.plot(x, y)
+plt.ylim(-1.0, 5.5)
+plt.show()
+
+
+import math
+import numpy as np 
+
+def relu(x):
+    values=[]
+    for i in x:
+        if i > 0:
+            values.append(i)
+        else:
+            values.append(0)          
+    return values 
+    
+def leaky_relu(x, g):
+    values=[]
+    for i in x:
+        if i > 0:
+            values.append(i)
+        else:
+            values.append(g * i)    
+    return values 
+
+def gelu(x):
+    return [0.5 * z * (1 + math.tanh(math.sqrt(2 / np.pi) * (z + 0.044715 * math.pow(z, 3)))) for z in x]
+
+x=np.linspace(-10,10,100)
+
+
+
+
+	relu
+		x>0 => x
+		x<0 => 0
+
+	reaky relu
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+  
+X = np.linspace(-np.pi, np.pi, 12)
+                     start   stop   step
+y = np.tanh(X)
+  -1.0 ~ 1.0
+print(X)
+print(y)
+  
+plt.plot(X, y, c = 'r', marker = "o")
+                 컬러  
+plt.xlabel("X")
+plt.ylabel("y")
+plt.show()
+
+
+	회귀
+	분류
+	클러스터링
+
+	지도학습
+	비지도학습
+	강화학습
+
+#행렬의 곱셈
+a=np.array([[1,2],[3,4]])
+print(a.shape)
+	(2, 2)
+	2행 2열
+print(a)
+b=np.array([[5,6],[7,8]])
+print(b.shape)
+print(b)
+print(np.dot(a,b))
+	행렬 곱셈
+
+	3x2 	2x3
+	3x2	3x2
+
+
+#행렬의 곱셈
+a=np.array([[1,2,3],[4,5,6]])
+	2행 3열
+print(a.shape)
+print(a)
+b=np.array([[1,2],[3,4],[5,6]])
+	3행 2열
+print(b.shape)
+print(b)
+print(np.dot(a,b))
+
+	2x3	3x2	(2,2)
+
+
+a=np.array([[1,2,3],[4,5,6]])
+	2행 3열
+c=np.array([[1,2],[3,4]])
+	2행 2열
+np.dot(a,c)
+# 2행 3열 x 2행 2열 에러
+#앞행렬의 열과 뒤 행렬의 행이 같아야 한다.
+
+ValueError: shapes (2,3) and (2,2) not aligned: 3 (dim 1) != 2 (dim 0)
+
+
+x=np.array([1, 0.5]) #입력값
+
+w1=np.array([[0.1, 0.3, 0.5], [0.2, 0.4, 0.6]]) #가중치
+b1=np.array([0.1, 0.2, 0.3]) #편향
+a1=np.dot(x,w1)+b1 #첫번째 은닉층의 합계값
+z1=sigmoid(a1)  #활성화함수
+print(a1)
+print(z1)
+[0.3 0.7 1.1]
+[0.57444252 0.66818777 0.75026011]
+0.0~1.0
+
+def identity_function(x): #항등함수	linear
+    return x
+
+w3=np.array([[0.1, 0.3], [0.2, 0.4]])
+b3=np.array([0.1, 0.2])
+a3=np.dot(z2,w3)+b3
+y=identity_function(a3) #출력층의 활성화함수로 항등함수를 사용
+print(y)
+
+
+
+[9.99954602e-01 4.53978687e-05 1.68883521e-48]
+	더하면 1
+99%		...		..
+9.9 x 10의 -1승
+0.99....
+
+
+
+
+
+print(softmax(a))
+s=np.sum(softmax(a))
+print(s)
+idx=np.argmax(softmax(a))
+	최대값의 인덱스
+print(idx)
+print(a[idx])
+
+
+[1.38389653e-87 3.72007598e-44 1.00000000e+00]
+	0	1		2
+  
+1.0
+2
+1200
+
+
+
+
+
+
+
+	hidden	relu
+	output
+		linear	회귀분석
+		sigmoid	이진분류
+		softmax	다분류
+
+	epoch
+
+순전파
+	input	hidden	output
+
+				출력값	90
+				실제값	100
+				손실(오차,비용)
+				mse 평균제곱오차
+				엔트로피
+
+역전파
+
+
+
+
+
+	실제값	10	7	6	5
+	
+	출력값	3	9	4	2
+
+	오차	7	-2	2	3
+	오차제곱
+	오차절대 7	2	2	3	
+
+	평균제곱오차 mse
+	
+	평균제곱근오차	rmse
+	평균절대오차	mae
+
+
+
+
+
+
+import numpy as np
+
+def mean_squared_error(y,t):
+    return 0.5*np.sum((y-t)**2)
+
+t=np.array([0,0,1,0,0,0,0,0,0,0])
+	실제값
+y=np.array([0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0])
+	출력값
+print(mean_squared_error(y,t))
+y=np.array([0.1, 0.05, 0.1, 0.0, 0.05, 0.1, 0.0, 0.6, 0.0, 0.0])
+print(mean_squared_error(y,t))
+
+
+# 엔트로피 : 정보를 최적으로 인코딩하기 위해 필요한 비트수
+#      오늘이 무슨 요일인지 bit로 표현하려면? 3비트 필요
+#          월  화  수  목   금  토  일
+#         000 001 010 011 100 101 110
+def cross_entropy_error(y,t): # y예측값, t실제값
+    delta=1e-7 #값이 무한대가 되거나 0이 되지 않도록 빼주는 값
+    return -np.sum(t * np.log(y+delta))
+
+t=np.array([0,0,1,0,0,0,0,0,0,0])
+y=np.array([0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0])
+cross_entropy_error(y,t)
+
+
+
+
+
+
+	손실함수: 오차를 측정하는 함수
+
+		mse			평균제곱오차
+		categorical cross entropy	다분류
+		binary cross entropy	이진분류
+
+
+
+
+import pandas as pd
+df = pd.read_csv("c:/data/ozone/ozone2.csv")
+데이터프레임
+df.head()
+
+
+	시계열 데이터
+	time series
+
+
+
+
+	독립변수		종속변수
+	X		y
+	
+
+
+cols=['Solar.R', 'Wind', 'Temp']
+X = df[cols]
+y = df['Result']
+
+import mglearn
+import matplotlib.pyplot as plt
+#산점도 행렬 출력
+pd.plotting.scatter_matrix(X, c=y, figsize=(15,15),marker='o', cmap=mglearn.cm3)
+plt.show()
+
+	탐색적 데이터 분석 EDA
+
+
+
+
+#언더샘플링
+from imblearn.under_sampling import RandomUnderSampler
+X_sample, y_sample = RandomUnderSampler(random_state=0).fit_resample(X, y)
+			y 0 / 1 낮은 쪽으로
+X_samp = pd.DataFrame(data=X_sample,columns=cols )
+y_samp = pd.DataFrame(data=y_sample,columns=['Result'])
+df_samp=pd.concat([X_samp,y_samp],axis=1)
+df_samp["Result"].value_counts()
+
+
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=10)
+					검증용 20%
+
+
+
+from sklearn.neural_network import MLPClassifier
+model = MLPClassifier(random_state=0)
+model.fit(X_train, y_train)
+	학습용
+
+
+
+
+
+
+
+
+
+
+
+import numpy as np
+pred=model.predict(X_test)
+출력
+print("학습용:",model.score(X_train, y_train))
+print("검증용:",model.score(X_test, y_test))
+print("검증용:",np.mean(pred == y_test))
+
+[1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1]	출력
+[1 0 1 1 1 1 0 0 1 0 1 0 1 0 0 1 0 0 0 1 1 1 0 0 1 1 0 0 1]	실제
+
+
+
+
+
+	0~1 정규화		MinMaxScaler
+
+	평균 0, 표준편차 1		StandardScaler
+
+
+
+
+
+
+
+
+
+
+
+
+학습용: 0.7391304347826086
+검증용: 0.7931034482758621
+
+	RobustScaler 
+
+idx = np.arange(X.shape[0])
+		(150, 4)
+
+		arange(150)	0~149
+np.random.seed(0)
+	랜덤 기준값
+np.random.shuffle(idx)
+	재현성
+X = X[idx]
+y = y[idx]
+
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+	평균 0, 표준편차 1
+scaler.fit(X)  
+	패턴 분석
+X = scaler.transform(X)
+	변환
+	fit_transform(X) 분석+변환
+
+	파라미터
+	hyper parameter
+	하이퍼
+
+from sklearn.model_selection import GridSearchCV
+from sklearn.neural_network import MLPClassifier
+params = {
+    'hidden_layer_sizes': [(10,), (50,), (100,),
+                           (10,10), (50,50), (100,100)],
+	은닉층 개수, 노드수
+	(10,) => 은닉층 1개, 노드 10개
+    'activation': ['tanh', 'relu'],
+	활성화함수 
+    'alpha': [0.0001, 0.01],
+}
+model = MLPClassifier(random_state=0, max_iter=5000)
+clf = GridSearchCV(model, param_grid=params, cv=3)
+	Cross Validation			교차검증횟수
+	교차검증
+clf.fit(X, y)
+print(clf.best_score_)
+	최고점수
+print(clf.best_params_)
+	최적의 파라미터
+print(clf.best_estimator_)
+	최적의 모형
+0.9733333333333333
+{'activation': 'tanh', 'alpha': 0.0001, 'hidden_layer_sizes': (50,)}
+MLPClassifier(activation='tanh', hidden_layer_sizes=(50,), max_iter=5000,
+              random_state=0)
+
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, stratify=y, random_state=0)
+scaler = StandardScaler()
+scaler.fit(X_train)  
+	패턴 분석
+X_train = scaler.transform(X_train)
+	변환
+X_test = scaler.transform(X_test)
+	검증용
+
+
+# generator
+def make_numbers(n):
+    while n < 6:
+        yield n # 메모리에 저장하지 않고 호출한 곳으로 값을 보냄(return과 비슷한 역할)
+        n += 1
+    
+for i in make_numbers(0):
+    print(i)  
+
+
+import sys
+
+a = [i for i in range(100)]
+	리스트
+print(sys.getsizeof(a))
+b = [i for i in range(1000)]
+print(sys.getsizeof(b))
+
+c = (i for i in range(100))
+	[] 대괄호 => 리스트
+	() 소괄호 => 필요한만큼
+print(sys.getsizeof(c))
+d = (i for i in range(1000))
+print(sys.getsizeof(d))
+
+
+%%time	=> 시간측정
+#리스트를 사용하면 리스트의 모든 원소를 한꺼번에 처리한 후 최종 결과가 출력됨    
+for i in items1:
+    print(i)
+
+
+#일반적인 방식(한꺼번에 처리하는 방식)
+from sklearn.metrics import accuracy_score
+clf=MLPClassifier(max_iter=5000, random_state=0)
+clf.fit(X_train, y_train)
+	학습
+pred = clf.predict(X_test)
+	검증용 => 출력
+accuracy_score(y_test, pred)
+	     실제    출력 
+
+
+
+
+#batch(X_train, y_train, 10)
+#전체 데이터를 보내지 않고 10개씩 조금씩 보내서 처리하는 방식
+def batch(X1, y1, n):
+    x_size=len(X1)
+	120
+    for idx in range(0, x_size, n):
+        yield X1[idx:min(idx + n, x_size)], y1[idx:min(idx + n, x_size)]
+
+#10개씩 12회로 나누어 처리하는 방식
+clf2 = MLPClassifier(random_state=0)
+#시간은 더 오래 걸릴 수 있으나 메모리를 절약할 수 있는 방법
+points_tr=[]
+points_te=[]
+samp = batch(X_train, y_train, 10)
+			 미니배치 10세트
+for idx, (chunk_X, chunk_y) in enumerate(samp):
+    인덱스,데이터
+    print(idx)
+    #부분적으로 학습, 처음에는 정확도가 낮지만 점차 향상됨
+    clf2.partial_fit(chunk_X, chunk_y, classes=[0, 1, 2])
+	부분학습
+    pred = clf2.predict(X_train)
+    point=accuracy_score(y_train, pred)
+    points_tr.append(point)
+    print('학습용:',point)
+    pred = clf2.predict(X_test)
+    point=accuracy_score(y_test, pred)
+    points_te.append(point)
+    print('검증용:',point)
+
+
+
+
+	batch		배치(일괄처리)
+
+	mini_batch	미니배치
+
+	online		1건씩
+
+
+
+
+
+
+# 리스트
+items1 = [func_sleep(x) for x in range(5)]
+
+	
+
+# generator 생성
+items2 = (func_sleep(y) for y in range(5))
+	[] 리스트
+	() 튜플
+
+
+
+
+
+
+	pip install tensorflow	=> cpu 버전
+
+	pip install tensorflow-gpu	=> gpu 버전
+
+
+
+
+df["class"].value_counts()
+   종속변수 0 / 1
+
+
+quality
+5    681
+6    638
+7    199
+4     53
+8     18
+3     10
+
+
+train_cols = df.columns[0:11]  #0~10 필드
+		[start:stop:step]
+		0      11    1
+X = df[train_cols] # 독립변수
+y = df["class"]
+
+import mglearn
+import matplotlib.pyplot as plt
+pd.plotting.scatter_matrix(X,c=y,figsize=(15,15),marker='o',cmap=mglearn.cm3)
+plt.show()
+
+from sklearn.neural_network import MLPClassifier
+model = MLPClassifier(random_state=0)
+	기본모형
+model.fit(X_train, y_train)
+
+
+c:\python\lib\site-packages\sklearn\neural_network\_multilayer_perceptron.py:691: ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet.
+  warnings.warn(
+
+# 은닉층을 2개로 늘림
+model = MLPClassifier(max_iter=1000,hidden_layer_sizes=[100,100],random_state=0)
+model.fit(X_train_scaled, y_train)
+print("학습용:",model.score(X_train_scaled, y_train))
+print("검증용:",model.score(X_test_scaled, y_test))
+#예측률이 향상됨
+
+학습용: 0.9991596638655462
+검증용: 0.8187919463087249
+
+	과대적합	over fitting
+
+	과소적합	under fitting
+
+
+from sklearn.metrics import confusion_matrix
+pred=model.predict(X_test_scaled)
+confusion_matrix(y_test, pred)
+
+	정오분류표
+
+	실제값
+예측값
+	0	1
+0	맞	틀
+1	틀	맞
+
+
+# 최적의 은닉노드 개수를 구하기 위한 실험
+import numpy as np
+import matplotlib.pyplot as plt
+train_rate=[]
+test_rate=[]
+for i in range(100,301,100): # 첫번째 은닉층의 노드수 100~300
+	100 / 200 / 300
+    for j in range(100,301,100): #두번째 은닉층의 노드수 100~300
+		100
+			100	200	300
+		200	100	200	300
+		300	100	200	300
+        model=MLPClassifier(random_state=0,
+            hidden_layer_sizes=[i,j],max_iter=1000)
+        model.fit(X_train_scaled,y_train)
+        train_rate.append(model.score(X_train_scaled,y_train))
+        test_rate.append(model.score(X_test_scaled,y_test))        
+plt.rcParams['font.size']=15
+plt.plot(range(1,10),train_rate,label='Train')
+plt.plot(range(1,10),test_rate,label='Test')
+plt.ylabel('Accuracy')
+plt.xlabel('count')
+plt.legend()
+
+
+max_rate=max(test_rate) #최대값
+idx=np.where(test_rate == max_rate)[0][0] #최대값의 인덱스값
+print('idx:',idx)
+print('최고정확도:',max_rate)        
+cnt=0
+for i in range(100,301,100):
+    for j in range(100,301,100):
+        if cnt == idx:
+            print(i,j)
+        cnt+=1
+
+
+#실험을 통해 구한 최적의 은닉노드수로 만든 모형
+model=MLPClassifier(hidden_layer_sizes=[300,100],random_state=0)
+model.fit(X_train_scaled,y_train)
+print(f'학습용:{model.score(X_train_scaled,y_train)*100:6.2f}%')
+print(f'검증용:{model.score(X_test_scaled,y_test)*100:6.2f}%')
+
+	f'  ' 포맷 스트링
+
+	f'  {변수} '
+                {변수:.2f'
+		소수 둘째자리	float 부동
+
+
+
+
+
+
+
