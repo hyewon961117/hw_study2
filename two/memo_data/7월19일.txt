@@ -1,0 +1,864 @@
+인공신경망-tensorflow
+
+오픈대화방 참여
+	https://open.kakao.com/o/gLjc5yuf
+
+강의자료 홈페이지 회원가입
+	http://edu.vitasilvar.com
+
+	epub
+	calibre ebook viewer
+
+
+python 3.9.13 설치
+
+https://www.python.org/ftp/python/3.9.13/python-3.9.13-amd64.exe
+
+	visual studio code
+
+
+	tensorflow	=> keras
+	pytorch
+
+CUDA Toolkit 11.7.1
+        https://developer.nvidia.com/cuda-toolkit-archive
+	Windows, x86_64 , 10, exe (local)
+
+cuDNN SDK - 회원가입 필요
+	CUDA와 호환되는 버전으로 설치
+	https://developer.nvidia.com/rdp/cudnn-archive
+	Download cuDNN v8.6.0 (October 3rd, 2022), for CUDA 11.x
+	압축 해제 후 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.7 디렉토리에 붙여넣기(덮어쓰기)
+
+	환경변수 path 추가
+	C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.7\include
+	C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.7\lib
+
+
+
+
+
+	tensor flow
+	다차원배열 흐름
+
+
+	pip install tensorflow
+		cpu 버전
+
+
+
+
+
+
+
+
+
+# 상수 선언
+hello = tf.constant('Hello World')
+	상수
+print(hello)
+print(hello.numpy()) #바이트 배열
+	메모리로 이동
+print(hello.numpy().decode('utf-8')) # 바이트 배열을 스트링으로 변환
+
+	utf-8		3바이트
+	euc-kr (ms949)	2바이트
+
+tf.Tensor(b'Hello World', shape=(), dtype=string)
+b'Hello World'
+Hello World
+42
+[10, 32, 42]
+
+a = tf.constant(10)
+b = tf.constant(32)
+c = tf.add(a, b)  
+#c = a+b
+print(c.numpy())
+print([a.numpy(),b.numpy(),c.numpy()])
+
+
+
+#텐서플로의 변수 선언
+W = tf.Variable([0.3], dtype=tf.float32)
+	weight 가중치
+b = tf.Variable([-0.3], dtype=tf.float32)
+
+def linear_model(x):
+    return tf.multiply(W,tf.add(x,b))
+		W * tf.add(x,b)
+			x+b
+
+
+x=[1.,2.,3.,4.]
+# x의 값에 따라 linear_model 계산
+linear_model(x).numpy()
+
+import numpy as np
+X = np.array([[1,2,3],[4,5,6]])
+print(X.shape)
+print('X\n',X)
+
+W = np.array([[np.random.randint(10) for col in range(2)] for row in 
+		랜덤 정수
+
+range(3)])
+print(W.shape)
+print('W\n',W)
+
+b = np.array([[np.random.randint(10) for col in range(1)] for row in range(2)])
+print(b.shape)
+print('b\n',b)
+
+
+
+
+
+	손실함수		loss
+	최적화함수	optimizer
+
+
+import numpy as np
+#np.random.seed(7)
+	랜덤 기준값 고정
+#데이터 로딩, 시작36행은 건너뜀
+data=np.genfromtxt("c:/data/regression/x09.txt",skip_header=36)
+data[:10]
+
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.optimizers import RMSprop
+
+	독립변수	- 나이,체중
+
+	종속변수 - 혈당수치
+
+x_data=np.array(data[:,2:4],dtype=np.float32)
+y_data=np.array(data[:,4],dtype=np.float32)
+
+
+	data[:,2:4]
+		[행, 열]
+		[ : 
+		모든행, 2:4
+
+model=Sequential()
+	신경망 모형
+model.add(Dense(1,input_shape=(2,)))
+		Dense(output, input_shape=입력데이터차원)
+	
+	독립: 나이, 체중
+		(2,) 1차원
+		(2,3) 2차원
+
+	Dense	밀집
+	Sparse	희소
+
+		0 0 0 0 1		one hot encoding
+		1 0 0 0 0
+		0 1 0 0 0
+
+		(0,5) 1
+		(1,0) 1
+		(2,1) 1
+
+	input		output
+	나이xweight	혈당수치
+	체중xweight
+
+	bias
+
+
+
+
+rmsprop=RMSprop(learning_rate=0.01) #학습률 0.01
+model.compile(loss='mse',optimizer=rmsprop)
+                   손실         최적화
+model.summary()
+
+	You must install pydot (`pip install pydot`) and install graphviz (see instructions at https://graphviz.gitlab.io/download/) for plot_model to work.
+
+
+hist=model.fit(x_data, y_data, epochs=1000)
+히스토리=모델.fit( 독립, 종속, epochs )
+
+
+Epoch 1/1000
+           
+1/1 [==============================] - 1s 698ms/step - loss: 196959.9844
+
+Epoch 1000/1000
+1/1 [==============================] - 0s 15ms/step - loss: 1845.8583
+
+#새로운 데이터로 예측
+#체중 100kg, 40세
+model.predict(np.array([100,40]).reshape(1,2))
+                                                  행,열
+
+model.predict([[100,40]])
+
+
+x=np.linspace(20,100,50).reshape(50,1)
+                  start stop 
+y=np.linspace(10,70,50).reshape(50,1)
+x2=np.concatenate((x,y),axis=1) #x,y연결
+z=np.matmul(x2,w)+b
+
+
+
+
+	회귀
+
+	분류
+
+	군집화
+
+
+
+	pip install opencv-python
+
+
+from sklearn.preprocessing import StandardScaler
+scaler=StandardScaler() #평균 0, 표준편차 1로 만드는 스케일러
+scaler.fit(X_train)
+	패턴 분석
+X_train_scaled=scaler.transform(X_train)
+	변환
+X_test_scaled=scaler.transform(X_test)
+
+
+from keras import models, layers
+
+def build_model():
+    model = models.Sequential()
+		신경망
+    model.add(layers.Dense(64, activation='relu',
+				활성화함수
+                           input_shape=(X_train.shape[1],)))
+    model.add(layers.Dense(64, activation='relu'))
+    model.add(layers.Dense(1)) activation='linear' 항등함수
+    model.compile(optimizer='rmsprop', loss='mse', metrics=['mae'])
+    return model
+
+	input	hidden-1		hidden-2		output
+	13개	64		64		1
+
+model = build_model()
+model.summary()
+
+
+ValueError: Input 0 of layer "sequential_1" is incompatible with the layer: expected shape=(None, 12), found shape=(None, 13)
+
+
+import matplotlib.pyplot as plt
+import numpy as np 
+
+def train(x_train, y_train, epochs=21):
+    for epoch in np.arange(1, epochs):
+      hist=model.fit(x_train, y_train)
+      plt.plot(y_train, c='r', label='real')
+	실제값
+      plt.plot(model.predict(x_train), c='b', label='pred')
+	예측값
+      plt.legend()
+      mae=hist.history['mae'][0]
+      plt.title(f"Epoch {epoch:02d}, mae {mae:.2f}")
+      plt.savefig(f"img/plot_{epoch:02d}.png")
+	파일로 저장
+      plt.clf()
+
+train(X_train,y_train)
+
+import cv2
+import glob 
+
+img_array=[]
+size=(0,0)
+for filename in  sorted(glob.glob('img/*.png')):
+    img=cv2.imread(filename)
+	이미지 읽기
+    height,width,layers=img.shape
+	세로,가로,채널 흑백 0/컬러 3
+    size=(width,height)
+    img_array.append(img)
+
+out=cv2.VideoWriter('model.mp4', cv2.VideoWriter_fourcc(*'H264'), 0.5, size)
+for i in range(len(img_array)):
+    out.write(img_array[i])
+out.release()
+Epoch 1/100
+7/7 [==============================] - 0s 4ms/step - 
+mini batch
+loss: 546.4143 - mae: 21.5848
+   평균제곱오차    평균절대오차
+
+
+Epoch 100/100
+7/7 [==============================] - 0s 4ms/step - loss: 6.5253 - mae: 1.8716
+
+
+mse, mae = model.evaluate(X_test_scaled, y_test, verbose=1)
+		평가      스케일링
+print(mse)
+print(mae) 
+
+
+	독립변수 4개
+
+	종속변수 1개
+
+		0/1/2
+
+		0	=> 1 0 0
+		1	=> 0 1 0
+		2	=> 0 0 1
+
+
+
+
+
+from sklearn.preprocessing import LabelEncoder
+import pandas as pd
+X=iris.iloc[:, :4].values # 독립변수
+				start:stop:step
+				0:4
+	iloc 인덱스	[   :    ,   :4]
+			행        열
+	loc 필드명
+
+y=iris.iloc[:,4].values  #종속변수
+print(y[:5])
+encoder=LabelEncoder() #문자열에 label을 붙임
+y1=encoder.fit_transform(y)
+print(y1[:5])
+y2=pd.get_dummies(y1).values #종속변수에 대한 원핫인코딩 처리
+print(y2[:5])
+
+
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.optimizers import SGD
+#모델 생성
+model = Sequential()
+model.add(Dense(64,input_shape=(4,),activation='relu'))
+		output    input
+model.add(Dense(64,activation='relu'))
+model.add(Dense(3,activation='softmax'))
+			다분류
+			이진분류-sigmoid
+	input	hidden-1		hidden-2		output
+	4	64		64		3
+
+sgd = SGD(learning_rate=0.01)  
+	학습률
+	확률적 경사하강법
+model.compile(loss='categorical_crossentropy', optimizer=sgd, 
+		다분류 
+		이진분류 - 
+
+metrics=['accuracy'])
+
+
+from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau, CSVLogger
+es = EarlyStopping(monitor='val_loss', patience=3)
+	조기학습종료    기준	종료횟수
+# 학습 과정에서 만들어진 최적의 파라미터 조합으로 모형을 저장
+mc = ModelCheckpoint("iris_best.h5", save_best_only=True)
+			h5
+# 학습이 잘 안될 때 학습률을 동적으로 조절하는 옵션
+rlr = ReduceLROnPlateau(factor=0.1, patience=5) #기존 학습률*factor (배수)
+			0.01 x 0.1
+# 학습 과정의 주요 history를 csv로 저장
+csvlogger = CSVLogger("mylog.csv")  
+hist = model.fit(X_train, y_train, validation_split=0.2, epochs=100, callbacks=[es, mc, rlr, csvlogger])
+
+	train	test
+	8	2
+	7	3
+
+	train	validation		test
+	6	2		2
+
+
+
+
+
+Epoch 1/100
+3/3 [==============================] - 1s 119ms/step - 
+미니배치
+loss: 1.4768 - accuracy: 0.3750 - val_loss: 1.3221 - val_accuracy: 0.1667 
+train				validation
+
+- lr: 0.0100
+
+
+Epoch 100/100
+3/3 [==============================] - 0s 15ms/step - loss: 0.3363 - accuracy: 0.9583 - val_loss: 0.2596 - val_accuracy: 1.0000 - lr: 0.0100
+
+from keras.models import load_model
+model=load_model('iris_best.h5')  
+model.evaluate(X_test, y_test, verbose=0)
+
+[0.3374767303466797, 0.9666666388511658]
+	loss		accuracy
+
+
+import numpy as np
+from sklearn.metrics import confusion_matrix
+pred = model.predict(X_test)
+출력
+print(pred[:10])3
+
+	0		1	2
+[[1.99976005e-02 5.08048058e-01 4.71954346e-01]
+		50%		47%
+
+ [9.07937109e-01 8.80414099e-02 4.02142620e-03]
+    90%				
+
+
+ [1.59116108e-02 4.27163780e-01 5.56924641e-01]
+
+y_test_class = np.argmax(y_test,axis=1)
+		최대값의 인덱스
+pred_class = np.argmax(pred,axis=1)
+print(y_test_class[:10])
+print(pred_class[:10])
+print(confusion_matrix(y_test_class,pred_class))
+
+
+  0   1   2
+[[10  0  0]
+ [ 0  9  1]
+ [ 0  0 10]]
+
+
+from flask import Flask, Markup, render_template, request
+
+app = Flask(__name__)
+	플라스크
+http://127.0.0.1:8000/gugu
+@app.route('/gugu',methods=['GET'])
+			get / post
+	url mapping
+	http://localhost/gugu
+
+def main():
+    return render_template('gugu/gugu.html')
+	템플릿 => html 생성
+
+@app.route('/gugu_result', methods=['POST'])
+def gugu_result():
+    dan = int(request.form['dan'])
+		<input type="text" name="dan">
+		dan "5" 
+    result=''
+    for i in range(1,10):
+        result += '{}x{}={}<br>'.format(dan,i,dan*i)
+    result=Markup(result)
+    return render_template('gugu/gugu_result.html', result=result)
+
+if __name__ == '__main__':
+	시작
+    app.run(port=8000, threaded=False)
+	서비스포트	thread 작업 단위
+	0~65535		single / multi 
+	웹서비스 80
+
+	naver.com:8000
+
+
+http://127.0.0.1:8000/gugu
+
+
+<h2>구구단</h2>
+	h1 ~ h6
+<form method="post" action="gugu_result">
+          get / post		데이터 수신 주소
+    단
+    <input type="text" name="dan">
+			변수명
+		dan 5
+    <input type="submit" value="확인">
+		제출버튼
+</form>
+
+
+5x1=5<br>5x2=10<br>5x3=15<br>5x4=20<br>5x5=25<br>5x6=30<br>5x7=35<br>5x8=40<br>5x9=45<br> gugu main
+
+
+return render_template('gugu/gugu_result.html', result=result)
+					변수  값
+
+	{{변수}}
+
+
+<a href="/gugu">gugu main</a>
+
+
+	thread 작업단위
+
+	single thread	프로그램 1개에 작업단위 1개
+	multi thread	프로그램 1개에 작업단위 여러개
+
+
+
+from flask import Flask, render_template, request
+from keras.models import load_model
+import numpy as np
+
+app = Flask(__name__)
+	플라스크 앱 생성
+http://127.0.0.1:8000/
+	로컬 ip
+
+hyper text transfer protocol
+
+http://호스트:포트/주소
+
+@app.route('/', methods=['GET'])
+def main():
+    return render_template('iris/input.html')
+
+
+@app.route('/iris_result', methods=['POST'])
+def iris_result():
+    flowers = ['setosa', 'versicolor', 'virginica']
+	     0		1	2
+    model = load_model('c:/data/iris/iris.h5')
+		신경망 모형
+    a = float(request.form['a'])
+	스크링=>실수형
+    b = float(request.form['b'])
+    c = float(request.form['c'])
+    d = float(request.form['d'])
+    test_set = [[a, b, c, d]]
+	2차원 배열
+    pred = model.predict(test_set)
+	[0, 1, 2]
+    n = np.argmax(pred, axis=1)
+	최대값 인덱스
+    result = flowers[n[0]]
+    return render_template('iris/iris_result.html', result=result, a=a, b=b, c=c, d=d)
+
+
+if __name__ == '__main__':
+    app.run(port=8000, threaded=False)
+	플라스크 앱 실행
+
+
+<form method="post" action="iris_result">
+    꽃받침의 길이: <input type="text" name="a" value="5"><br>
+    꽃받침의 너비: <input type="text" name="b" value="2.9"><br>
+    꽃잎의 길이: <input type="text" name="c" value="1"><br>
+    꽃잎의 너비: <input type="text" name="d" value="0.2"><br>
+    <input type="submit" value="확인">
+</form>
+  ValueError: Exception encountered when calling layer "sequential" "                 f"(type Sequential).
+    
+    Input 0 of layer "dense" is incompatible with the layer: expected min_ndim=2, found ndim=1. Full shape received: (None,)
+학습 2차원, 입력 1차원
+    
+
+
+
+
+
+
+
+
+
+	주제선정=>데이터수집=>전처리=>머신러닝 모형
+	=>평가=>활용
+			web
+			app
+
+	독창성
+	데이터 수집
+	구현 가능
+
+	설치 완료 후 디렉토리 확인
+
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.7
+
+
+
+5) 환경변수 path 추가
+
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.7\include
+
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.7\lib
+
+
+	pip install tensorflow-gpu==2.10.0
+
+		tensorflow : cpu 버전
+		tensorflow-gpu : gpu 버전
+
+[PhysicalDevice(name='/physical_device:GPU:0', device_type='GPU')]
+
+	[]
+
+
+	크롬 원격 데스크톱
+
+
+	remotedesktop.google.com/access
+
+
+	with tf.device('/CPU:0'):
+
+	with tf.device('/GPU:1'):
+
+	tensorflow/keras
+
+	pytorch
+
+
+
+tf.debugging.set_log_device_placement(True)
+#cpu에서 실행시키는 방법
+with tf.device('/CPU:0'):
+    a = tf.constant([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+    b = tf.constant([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+    c = tf.matmul(a, b)
+    print(c)
+
+
+
+
+
+
+
+
+
+
+
+
+
+[PhysicalDevice(name='/physical_device:GPU:0', device_type='GPU')]
+tf.Tensor(b'Hello World', shape=(), dtype=string)
+
+	b 바이트 배열
+
+	ascii code : 문자 1개 => 1바이트
+	uni code : 문자 1개		utf-8   3바이트 
+				euc-kr(ms949, cp949) 2바이트
+
+
+	좌석등급		1등석여부	2등석여부	3등석여부
+	1		1		0		0
+	2		0		1		0
+	3		0		0		1
+
+
+	model.add(Dense(1, activation='sigmoid'))
+				0.0 ~ 1.0
+				0.94
+				0.33
+
+
+
+	c:/python
+	c:/python/scripts
+
+
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+from matplotlib import font_manager, rc
+font_name = font_manager.FontProperties(fname="c:/Windows/Fonts/malgun.ttf").get_name()
+rc('font', family=font_name)
+f,ax=plt.subplots(1,2,figsize=(12,6))
+	          1행 2열    가로12,세로6		
+df['Survived'].value_counts().plot.pie(autopct='%1.2f%%',ax=ax[0])
+				.2f 소수 둘째자리
+ax[0].set_title('생존자')
+ax[0].set_ylabel('')
+sns.countplot(x='Survived',data=df,ax=ax[1])
+ax[1].set_title('생존자')
+plt.show()
+
+	상관분석
+
+	-1.0 ~ 0.0
+
+	0.0 ~ 1.0
+
+
+
+
+train_cols=df.columns[1:-1]
+		1:-1
+                        0 1 2 3 4 5
+		           -1
+
+
+X=df[train_cols] #독립변수
+y=df['Survived'] #종속변수
+
+
+
+from keras.models import Sequential
+from keras.layers import Dense
+model = Sequential()
+	신경망 모형
+model.add(Dense(128, input_shape=(len(X_train.columns),), activation='relu'))
+		output                      독립변수		활성화 
+model.add(Dense(64, activation='relu'))
+model.add(Dense(64, activation='relu'))
+model.add(Dense(1, activation='sigmoid'))   이진분류
+model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
+                    손실           최적                    평가기준
+
+	input	hidden-1		hidden-2		hidden-3	  output
+	9	128		64		64	   1
+
+
+from joblib import dump
+dump(scaler, 'c:/data/titanic/scaler.model', compress=True)
+
+	pickle
+	joblib
+
+
+
+
+
+18/18 [==============================] - 1s 4ms/step - loss: 0.2085 - 
+미니배치
+
+accuracy: 0.7130
+
+#1등석, 2등석, 3등석, 남성여부, 여성여부, 나이, 형제자매, 부모자녀, 요금
+#3등석, 남성, 19세, 형제자매2, 부모자녀0, 요금50
+person1 = [[0, 0, 1, 1, 0, 19, 2, 0, 50]]
+#1등석, 여성, 17세, 형제자매0, 부모자녀2, 요금30
+person2 = [[1, 0, 0, 0, 1, 17, 0, 2, 30]]
+#2등석, 여성, 40세, 형제자매1, 부모자녀1, 요금70
+person3 = [[0, 1, 0, 0, 1, 40, 1, 1, 70]]
+#스케일링을 해야 할 경우
+person1=scaler.transform(person1)
+person2=scaler.transform(person2)
+person3=scaler.transform(person3)
+print(model.predict(person1))
+print(model.predict(person2))
+print(model.predict(person3))
+
+1/1 [==============================] - 0s 79ms/step
+[[2.6571518e-06]]
+1/1 [==============================] - 0s 18ms/step
+[[1.]]
+
+
+
+from flask import Flask, render_template, request
+from keras.models import load_model
+from joblib import load
+
+app = Flask(__name__)
+	플라스크 앱 생성
+
+	http://localhost:8000/
+@app.route('/', methods=['GET'])
+def main():
+    return render_template('titanic/input.html')
+
+
+@app.route('/result', methods=['POST'])
+def result():
+    model = load_model('c:/data/titanic/titanic.h5')
+		신경망 모형 불러오기
+    sex = request.form['sex']
+	
+  성별: <select name="sex">
+		변수명
+
+        <option value="male">남성</option>
+
+        <option value="female">여성</option>
+
+    </select><br>
+
+    if sex == "male":
+        male = 1
+        female = 0
+        gender = '남성'
+    else:
+        male = 0
+        female = 1
+        gender = '여성'
+    pclass = request.form['pclass']
+    if pclass == "1":
+        pclass1 = 1
+        pclass2 = 0
+        pclass3 = 0
+    elif pclass == "2":
+        pclass1 = 0
+        pclass2 = 1
+        pclass3 = 0
+    elif pclass == "3":
+        pclass1 = 0
+        pclass2 = 0
+        pclass3 = 1
+    age = int(request.form['age'])
+    sibsp = int(request.form['sibsp'])
+    parch = int(request.form['parch'])
+    fare = float(request.form['fare'])
+    test_set = [[pclass1, pclass2, pclass3, male, female, age, sibsp, parch, fare]]
+		2차원 배열
+    scaler = load('c:/data/titanic/scaler.model')
+		스케일러 로딩
+    test_set = scaler.transform(test_set)
+    rate = model.predict(test_set)
+	0.0~1.0
+
+    if rate >= 0.5:
+        result = '생존'
+    else:
+        result = '사망'
+    return render_template('titanic/result.html',
+                           rate='{:.2f}%'.format(rate[0][0] * 100), result=result, sex=gender, pclass=pclass, age=age,
+                           sibsp=sibsp, parch=parch, fare=fare)
+
+
+if __name__ == '__main__':
+	시작
+    app.run(port=8000, threaded=False)
+
+
+
+    age = int(request.form['age'])
+    sibsp = int(request.form['sibsp'])
+    parch = int(request.form['parch'])
+    fare = float(request.form['fare'])
+    test_set = [[pclass1, pclass2, pclass3, male, female, age, sibsp, parch, fare]]
+    scaler = load('c:/data/titanic/scaler.model')
+	스케일러
+    test_set = scaler.transform(test_set)
+	원본=>스케일링
+    rate = model.predict(test_set)
+	모형에 입력
+    print('생존률:',rate)
+
+생존률: []
+	rate[0]  []
+	rate[0][0]
+
+rate='{:.2f}%'.format(0.9995639 * 100)
+
+
+    if rate >= 0.5:
+        result = '생존'
+    else:
+        result = '사망'
+    return render_template('titanic/result.html',
+                           rate='{:.2f}%'.format(rate[0][0] * 100), result=result, sex=gender, pclass=pclass, age=age,
+                           sibsp=sibsp, parch=parch, fare=fare)
+
+
+
+
+
+
+
