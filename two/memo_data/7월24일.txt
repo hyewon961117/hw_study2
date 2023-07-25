@@ -1,0 +1,751 @@
+오라클 설치
+
+
+	Oracle Database 21c Express Edition for Windows x64
+https://download.oracle.com/otn-pub/otn_software/db-express/OracleXE213_Win64.zip
+
+
+	oracle sql developer
+	Windows 64-bit with JDK 11 included
+
+https://www.oracle.com/webapps/redirect/signon?nexturl=https://download.oracle.com/otn/java/sqldeveloper/sqldeveloper-23.1.0.097.1607-x64.zip
+
+
+Django 실습(oracle 연동)
+
+클러스터링
+시계열분석
+
+	arima
+	RNN
+
+
+
+
+
+
+
+
+
+	Model		데이터
+	Template	화면(html)
+	View		화면 처리 전단계, Controller
+
+
+django-admin startproject config .
+			  프로젝트이름
+
+
+			config/config
+
+
+
+
+
+
+
+
+
+
+
+
+	python manage.py migrate
+			 데이터베이스 구성
+
+
+
+	sqlite expert
+
+
+
+
+
+	cd c:/myweb
+	python manage.py migrate
+
+
+	python manage.py startapp address
+			 앱시작       앱이름
+
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'pyweb', # DB
+        'USER': 'web', # id
+        'PASSWORD': '1234', # password
+        'HOST': 'localhost', # host
+        'PORT': '3306', # port
+    }
+}
+
+
+새로운 데이터베이스 생성
+CREATE DATABASE pyweb;
+
+데이터베이스 목록 확인
+SHOW DATABASES;
+
+
+
+LANGUAGE_CODE = 'ko'
+
+TIME_ZONE = 'Asia/Seoul'
+
+	
+	
+
+	python manage.py migrate
+	DB에 반영
+
+	python manage.py createsuperuser
+	관리자 계정 생성
+
+사용할 데이터베이스 선택
+USE pyweb;
+
+테이블 목록 
+SHOW TABLES;
+
+사용자 테이블
+SELECT * FROM auth_user;
+
+
+models.py
+
+from django.db import models
+class 클래스이름(상위클래스)
+
+class Address(models.Model):
+      
+    idx = models.AutoField(primary_key=True)
+    필드명        자동증가일련번호  식별자
+    name = models.CharField(max_length=50, blank=True, null=True)
+		문자필드          varchar 가변사이즈문자열
+    tel = models.CharField(max_length=50, blank=True, null=True)
+    email = models.CharField(max_length=50, blank=True, null=True)
+    address = models.CharField(max_length=500, blank=True, null=True)
+
+
+
+
+
+
+
+
+
+
+class AddressAdmin(admin.ModelAdmin):
+    list_display = ('name', 'tel', 'email', 'address')
+	관리자 화면 표시 필드
+
+
+
+관리자 화면에 클래스 등록
+admin.site.register(Address, AddressAdmin)
+
+
+
+python manage.py makemigrations
+		변경사항 수집
+python manage.py migrate
+		DB에 반영
+
+
+
+
+PS C:\work\myweb> python manage.py makemigrations
+Migrations for 'address':
+               테이블
+  address\migrations\0001_initial.py
+    - Create model Address 
+     
+
+테이블 목록
+SHOW TABLES;
+
+주소록 테이블
+SELECT * FROM address_address;
+
+
+
+python manage.py runserver localhost:80
+
+
+python manage.py runserver localhost:80
+
+
+from address import views
+from django.urls import path
+
+urlpatterns = [
+
+	http://localhost/address/write
+
+    path('', views.home),
+	 url 함수
+    path('write', views.write),
+	           모듈.함수
+                  views.py
+			def write():
+			
+    path('insert', views.insert),
+    path('detail', views.detail),
+    path('update', views.update),
+    path('delete', views.delete),
+]
+
+	config.urls.py
+
+from django.contrib import admin
+from django.urls import path, include
+from config import views
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+
+	http://localhost
+    path('', views.home), 시작화면
+    path('address/', include('address.urls')),
+	http://localhost/address/
+]
+
+http://localhost => urls.py => path('', views.home)
+
+from django.shortcuts import render
+
+
+def home(request):
+         요청처리객체
+    return render(request, 'index.html')
+		템플릿 완성 => index.html 화면 출력
+
+
+
+
+
+
+from django.shortcuts import render
+
+
+def home(request):
+    return render(request, 'index.html')
+
+
+
+
+	kmeans
+
+	k 평균 군집화
+
+	중심좌표 선택
+
+		random
+		kmeans++
+
+
+
+from sklearn.datasets import load_digits
+digits = load_digits()
+digits.data.shape # 샘플수 1797, 변수 64개 (8x8 픽셀)
+digits.data[0]
+
+
+	0~255
+	
+	픽셀값/255. => 0.0~1.0
+
+
+
+
+import matplotlib.pyplot as plt
+plt.imshow(digits.data[0].reshape(8,8))
+
+from sklearn.cluster import KMeans
+model = KMeans(init="k-means++", n_clusters=10, random_state=0)
+		초기좌표			군집수
+
+#model = KMeans(init="random", n_clusters=10, random_state=0)
+		랜덤
+
+model.fit(digits.data)
+y_pred = model.labels_
+		출력값
+print(model.cluster_centers_) #중심좌표
+
+
+
+
+
+
+
+
+
+
+
+
+
+import matplotlib.pyplot as plt
+def show_digits(images, labels):
+    f = plt.figure(figsize=(8, 2))
+				가로8,세로2
+    i = 0
+    while (i < 10 and i < images.shape[0]):
+        ax = f.add_subplot(1, 10, i + 1)
+			  1행 10열  1번,~10번
+        ax.imshow(images[i], cmap=plt.cm.bone)
+        ax.set_title(labels[i])
+        ax.xaxis.set_ticks([])
+        ax.yaxis.set_ticks([])
+        plt.tight_layout()
+        i += 1
+        
+def show_cluster(images, y_pred, cluster_number):
+    images = images[y_pred == cluster_number]
+    y_pred = y_pred[y_pred == cluster_number]
+    show_digits(images, y_pred)
+
+
+from sklearn.metrics.cluster import silhouette_score
+silhouette_score(digits.data, y_pred)
+
+	1.0
+
+#0.18189172660646816
+
+
+
+from sklearn.decomposition import PCA
+pca = PCA(n_components=2)
+	주성분분석    주성분의 수
+X = pca.fit_transform(digits.data)
+plt.scatter(X[:, 0], X[:, 1], c=y_pred, cmap=plt.cm.Set1)
+plt.show()
+
+
+	0...255
+	0
+	0
+	0
+	1
+
+
+
+
+
+
+
+#0.18253573914791615 - kmeans++ 
+#0.18189172660646816 - random
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	batch		일괄
+
+	mini batch
+
+	online		샘플 1개씩
+
+
+
+from sklearn.datasets import make_blobs
+X, y = make_blobs(n_samples=150000, cluster_std=[1.0, 2.5, 0.5], 
+			샘플수		표준편차
+random_state=170)
+
+
+
+
+from sklearn.cluster import KMeans
+model1 = KMeans(n_clusters=3).fit(X)
+		클러스터수		데이터
+
+from sklearn.cluster import MiniBatchKMeans
+model2 = MiniBatchKMeans(n_clusters=3, batch_size=1536).fit(X)
+					미니배치 사이즈
+
+
+from sklearn.metrics.cluster import silhouette_score
+silhouette_score(X[:10000], model1.predict(X[:10000]))
+#silhouette_score(X, model1.predict(X))
+
+
+
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_sample_image
+from sklearn.feature_extraction import image
+# 샘플 이미지 로딩
+one_image = load_sample_image("china.jpg")
+#이미지의 차원
+print(one_image.shape)
+
+(427, 640, 3)
+ 가로  세로 채널 - 흑백1/컬러3
+
+
+
+
+
+
+
+
+
+
+
+
+kmeans = MiniBatchKMeans(n_clusters=81, random_state=0, verbose=True) # batch_size : default=1024
+#부분 이미지의 사이즈
+patch_size = (20, 20)
+buffer = []
+t0 = time.time()
+# 400장의 이미지를 6회 반복 : 2400
+index = 0
+for _ in range(6): # 전체 데이터를 6회 반복
+    for img in faces.images: # 400장의 이미지
+        data = extract_patches_2d(img, patch_size, max_patches=50,random_state=0)
+        data = np.reshape(data, (len(data), -1))
+        buffer.append(data)
+        index += 1
+        if index % 10 == 0:
+            #버퍼에 누적
+            data = np.concatenate(buffer, axis=0)
+            data -= np.mean(data, axis=0)
+            data /= np.std(data, axis=0)
+            kmeans.partial_fit(data)
+			부분학습
+            buffer = []
+        if index % 100 == 0:
+            print('부분 학습 : %4i / %i' % (index, 6 * len(faces.images)))
+dt = time.time() - t0
+print('실행시간:', dt)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	계층적
+
+	비계층적
+
+
+from scipy.cluster.hierarchy import dendrogram, linkage
+from matplotlib import pyplot as plt
+import numpy as np
+X = np.array([[i] for i in [0,1,2,3,5,8,13,21,30,50,80,120]])
+# 두 군집의 가장 가까운 샘플의 거리를 기준으로 계산
+Z = linkage(X, 'single')
+plt.figure(figsize=(10, 5))
+dendrogram(Z)
+plt.show()
+
+
+from scipy.cluster.hierarchy import dendrogram, linkage
+X, y = make_blobs(random_state=0, n_samples=12)
+Z = linkage(X, 'single')
+plt.figure(figsize=(7, 4))
+dendrogram(Z)
+plt.show()
+
+
+
+model = DBSCAN(eps=3, min_samples=2).fit(X)
+		거리	샘플수
+
+
+
+from sklearn.cluster import DBSCAN
+import numpy as np
+X = np.array([[1, 2], [2, 2], [2, 5],
+              [8, 7], [8, 10], [25, 80], [27,78], [40,50]])
+#최소거리 3, 최소샘플갯수 2개
+# eps(epsilon) : 이웃을 정의하기 위한 거리, 기본값 0.5
+# min_samples : 핵심데이터를 정의하기 위해 필요한 이웃영역 안의 데이터 갯수, 기본값 5
+model = DBSCAN(eps=3, min_samples=2).fit(X)
+		거리     최소샘플수
+print(model)
+plt.scatter(X[:,0],X[:,1],c=model.labels_)
+print(model.labels_) #3개로 나눠짐(-1은 노이즈가 있는 데이터, 아웃라이어)
+
+
+[ 0  0  0  1  1  2  2 -1]
+
+
+
+import matplotlib.pyplot as plt
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import DBSCAN
+scaler = StandardScaler()
+model = DBSCAN(eps=0.5,min_samples=5)
+model = DBSCAN(eps=1,min_samples=3)
+pipeline = make_pipeline(scaler,model)
+		작업순서
+pred = pd.DataFrame(pipeline.fit_predict(X))
+pred.columns=['predict']
+result = pd.concat([X,y,pred],axis=1)
+result
+fig = plt.figure(figsize=(6,6))
+ax=fig.add_subplot(111,projection='3d')
+
+	면	행	열
+	1	1	1
+
+ax.scatter(result['SepalLength'],result['SepalWidth'],result['PetalLength'],c=result['predict'],alpha=0.5)
+ax.set_xlabel('Sepal length')
+ax.set_ylabel('Sepal width')
+ax.set_zlabel('Petal length')
+plt.show()
+
+
+
+
+> dim(df)
+[1] 3333   17
+     행    열
+
+
+
+result<-NULL
+for (k in 1:10){
+  result[[k]]<-kmeans(df_scaled[,-17],k)
+			독립변수        클러스터수
+}
+# tot.withinss : The total within-cluster sum of square
+# 클러스터 내 총 제곱합(작을수록 군집화가 잘 된 것)
+wss <- numeric(10)
+for(k in 1:10){
+  wss[k]<-result[[k]]$tot.withinss
+}
+win.graph(); plot(wss,type="l")
+
+
+
+df$Species <- as.factor(df$Species)
+			0/1/2 => 범주형
+
+
+model <- kmeans(df[,-5], centers = 3)
+			클러스터수 3개
+model
+
+
+
+> table(df$Spe, result)
+   result
+     0  1  2
+  0 50  0  0
+  1  0 48  2
+  2  0 14 36
+> mean(result == df$Species)
+[1] 0.8933333
+
+
+
+
+        1 2 3 4  5
+> v1<-c(1,3,6,10,18)
+	벡터
+> d1<-dist(v1)
+	거리계산
+> d1
+   1  2  3  4
+2  2         
+3  5  3      
+4  9  7  4   
+5 17 15 12  8
+
+
+
+idx<-sample(1:nrow(df), 40)
+	    1:150       40개 선택
+
+
+
+#밀도기반 군집화   eps 중심점과의 거리, MinPts 최소 샘플 개수  
+
+ds <- dbscan(iris2, eps=0.42, MinPts=5)
+			거리	밀도
+
+
+
+
+
+
+
+
+
+
+
+
+- 시계열 분석(Time Series Analysis)
+- 시계열 데이터 : 시간의 흐름에 따라 관찰된 데이터
+- 시계열 분석의 목적 : 과거를 분석하여 미래를 예측하기 위한 것
+- 시계열 분석의 가정 : 오늘의 데이터가 내일의 데이터에 영향을 준다
+- 회귀 분석과의 차이점: 순서가 중요함
+- 자기상관성: 시간의 변화에 따른 변수간의 상관관계( t 시점의 데이터가 (t-1) 시점, (t-2) 시점, (t-n) 시점의 데이터와 얼마나 관계가 있는가? )
+- 정상성(stationarify) 
+- 안정적인 시계열 
+- 불안정적인 시계열 
+- 차분(difference) 
+
+	n차 차분
+
+	t-3	t-2	t-1	
+	10	20	30
+
+- AR모형(자기상관모형, Autocorrelation) : 이전의 값이 이후의 값에 영향을 미치는 모형
+  AR(1) : 직전 데이터가 다음 데이터에 영향을 줄 경우
+
+- MA모형(이동평균, Moving Average)
+
+- ARIMA 모형: AR모형과 MA모형을 결합한 모형
+  arima(p,d,q)
+    p : ar(p) 모형의 p  
+    d : 차분차수
+    q : ma(q) 모형의 q
+
+
+	arima 모형
+
+	RNN 모형
+
+	회귀분석 모형 - LinearRegression, DecisionTreeRegressor
+			SVR, 
+
+
+	adfuller(diff1)
+	안정적인 시계열 여부
+
+	arima(0,1,1)
+             p  d q
+
+
+	ARIMA(train, order=(0,1,1)).fit()
+
+
+
+df = pd.read_csv('c:/data/time/kings.dat',header=None,names=['age'])
+
+
+
+
+
+
+
+
+
+
+import matplotlib.pyplot as plt
+a=pd.Series([1025,1050,1010,1020,1040])
+	               15    30
+b=a.diff(periods=2).iloc[2:]
+         차분차수
+print(b)
+plt.plot(b)
+
+
+
+from statsmodels.tsa.stattools import adfuller
+import numpy as np
+#로그 후 차분한 자료를 adfuller 함수로 안정적인 시계열인지 확인
+diff1=np.log(df['age']).diff(periods=1).iloc[1:]
+        로그                   1차차분
+print(diff1)
+result = adfuller(diff1)
+		안정적인 시계열 데이터
+print(result)
+print('ADF Statistic: %f' % result[0])
+print('p-value: %f' % result[1])
+
+Name: age, dtype: float64
+(-7.44685642961395, 5.807660899733685e-11, 2, 38, {'1%': -3.6155091011809297, '5%': -2.941262357486514, '10%': -2.6091995013850418}, 32.204960096784966)
+ADF Statistic: -7.446856
+p-value: 0.000000
+
+	가설
+		귀무가설 H0 : 불안정한 시계열 데이터
+		대립가설 H1 : 내가 주장하고 싶은 가설
+			안정적인 시계열 데이터
+
+		p-value 0.05 작아야, 95% 신뢰수준
+
+
+
+
+from pmdarima.arima import auto_arima
+model = auto_arima(df)
+model
+
+       p d q
+ ARIMA(0,1,1)(0,0,0)[0]  
+
+	p : 정상성	0
+	d : 차분차수	1
+	q : 이동평균	1
+
+
+train = df[:30]
+	0~29
+test = df[30:]
+	30~끝 
+print(len(df['age']))
+print(df['age'].values)
+print(train.values)
+print(test.values)
+
+
+from statsmodels.tsa.arima.model import ARIMA
+model = ARIMA(train, order=(0,1,1)).fit()
+	시계열모형
+model.plot_diagnostics(figsize=(16, 8))
+plt.show()
+#Standardized residual: 잔차를 시계열로 그린 그래프
+#Histogram plus estimated density와 Normal Q-Q : 잔차가 정규성을 만족하는가
+#Normal Q-Q plot 데이터의 정규성 가정에 대한 검토, 모집단이 정규성을 따른다면 직선의 형태로 그려짐
+#안정적인 시계열 자료이고 정규분포임
+
+predictions = model.predict(start=1, end=len(test), dynamic=False)
+print(predictions)
+predictions.index=len(train)+(predictions.index-1)
+print(predictions)
+
+from sklearn.metrics import mean_squared_error
+mse = mean_squared_error(test, predictions)
+			실제	모형출력
+rmse = np.sqrt(mse)
+rmse
+	평균제곱근오차
+
+
+
+
+
+
+
+

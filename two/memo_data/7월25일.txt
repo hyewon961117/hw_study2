@@ -1,0 +1,819 @@
+오라클 설치
+
+
+	Oracle Database 21c Express Edition for Windows x64
+https://download.oracle.com/otn-pub/otn_software/db-express/OracleXE213_Win64.zip
+
+
+	oracle sql developer
+	Windows 64-bit with JDK 11 included
+
+https://www.oracle.com/webapps/redirect/signon?nexturl=https://download.oracle.com/otn/java/sqldeveloper/sqldeveloper-23.1.0.097.1607-x64.zip
+
+
+Django 실습(oracle 연동)
+
+시계열분석
+	arima
+	RNN
+
+
+
+
+
+	회귀분석		regression
+	분류		classification
+	클러스터링		clustering
+	시계열분석		time series
+
+	자연어처리 - 텍스트분류, 텍스트생성
+	이미지처리 - 이미지분류, 이미지생성
+
+
+
+
+
+
+
+	python manage.py runserver
+
+
+
+
+
+
+
+
+
+
+
+
+
+from django.shortcuts import redirect, render
+
+	redirect : 방향 전환, 작업 완료 => 새로운 작업
+	render : 화면(template) 생성
+
+from address.models import Address
+
+	urls.py		views.py	templates
+	주소 요청		데이터 준비,처리	화면
+
+
+def home(request):
+         요청사항 내장객체
+    items = Address.objects.order_by("name")
+            테이블   모든레코드들         필드명
+	화면으로 이동
+    return render(request, 'address/list.html', {'items': items, 'address_count': len(items)})
+				프로젝트/templates/address/list.html
+	
+	{'items': items, 'address_count': len(items)}
+          key      value
+
+
+def write(request):
+    return render(request, "address/write.html")
+
+
+def insert(request):
+    addr = Address(name=request.POST['name'], tel=request.POST['tel'], email=request.POST['email'],
+                   address=request.POST['address'])
+
+
+	<input type="text" name="변수명">
+	request.POST['변수명']
+		post 방식
+	
+
+    addr.save()
+	레코드 저장
+    return redirect("/address")
+		방향 전환 - 목록으로 이동
+
+
+def detail(request):
+    addr = Address.objects.get(idx=request.GET['idx'])
+					get 방식
+    return render(request, 'address/detail.html', {'addr': addr})
+
+
+def update(request):
+    addr = Address(idx=request.POST['idx'], name=request.POST['name'], tel=request.POST['tel'],
+                   email=request.POST['email'], address=request.POST['address'])
+    addr.save()
+	레코드 수정 update
+    return redirect("/address")
+
+
+def delete(request):
+    Address.objects.get(idx=request.POST['idx']).delete()
+    return redirect("/address")
+
+
+	CRUD
+	Create	레코드 생성
+	Read	열람
+	Update	수정
+	Delete	삭제
+
+
+
+	python manage.py makemigrations
+	python manage.py migrate
+
+
+	python manage.py createsuperuser
+
+
+
+	cd c:/myweb
+
+
+	url입력			urls.py
+	http://localhost:8000/      path('', views.home),
+
+
+
+<a href="admin/">관리자</a><br>
+하이퍼링크    이동      텍스트
+<a href="address/">주소록</a><br>
+
+					urls.py
+http://localhost:8000/address/	    path('address/', include('address.urls')),
+
+					    path('', views.home),
+
+def home(request):
+    items = Address.objects.order_by("name")
+    return render(request, 'address/list.html', {'items': items, 'address_count': len(items)})
+
+
+
+        {% for row in items %}
+			변수명
+		개별 in 리스트
+        <tr>
+	Table Row 행
+            <td>{{row.idx}}</td>
+
+		{{변수}} 
+
+		Table Division 셀
+            <td><a href="detail?idx={{row.idx}}">{{row.name}}</a></td>
+            <td>{{row.tel}}</td>
+            <td>{{row.email}}</td>
+            <td>{{row.address}}</td>
+        </tr>
+        {% endfor %}
+
+http://localhost:8000/address/write
+
+
+    path('write', views.write),
+
+
+
+
+
+
+    <form method="post" action="insert">
+		전송           데이터 받을 주소
+        {% csrf_token %}
+Forbidden (403)
+           에러코드
+CSRF 검증에 실패했습니다. 요청을 중단하였습니다.
+Cross Site Request Forgery 사이트 간 요청 위조
+
+        이 름 : <input name="name"><br>
+        전 화 : <input name="tel"><br>
+        메 일 : <input name="email"><br>
+        주 소 : <input name="address"><br>
+        <input type="submit" value="확인">
+		제출
+    </form>
+
+
+
+
+
+
+
+
+
+csrfmiddlewaretoken: QlR1rt9GyjQg88CSMPix5UHxPeGFDgj2v23zpksYnuUcAq4AkRsCSl8T6OCD0RWD
+name: park
+tel: 22
+email: 33
+address: 44
+
+
+
+csrfmiddlewaretoken: OW1FWGz5kXZoDzkSf1cmWzoKPqfXE5kS4VsUYysaoEdUOq3K1ScbQNVUAn0ETAqB
+name: 11
+변수명  값
+tel: 22
+email: 33
+address: 44
+
+
+
+def insert(request):
+    addr = Address(name=request.POST['name'], tel=request.POST['tel'], email=request.POST['email'],
+                   address=request.POST['address'])
+    addr.save()
+    return redirect("/address")
+
+
+	insert		address		address/				
+
+요청 URL:
+http://127.0.0.1:8000/address
+요청 메서드:
+GET
+상태 코드:
+301 Moved Permanently
+원격 주소:
+127.0.0.1:8000
+참조 페이지 정책:
+same-origin
+
+
+
+
+http://127.0.0.1:8000/address/detail?idx=1
+				url?key=value&key=value
+					쿼리스트링
+    path('detail', views.detail),
+
+
+def detail(request):
+    addr = Address.objects.get(idx=request.GET['idx'])
+    return render(request, 'address/detail.html', {'addr': addr})
+						   key     value
+
+            <tr>
+                <td>이름</td>
+                <td><input name="name" value="{{addr.name}}"></td>
+            </tr>
+            <tr>
+                <td>전화</td>
+                <td><input name="tel" value="{{addr.tel}}"></td>
+            </tr>
+            <tr>
+                <td>이메일</td>
+                <td><input name="email" value="{{addr.email}}"></td>
+            </tr>
+            <tr>
+                <td>주소</td>
+                <td><input name="address" value="{{addr.address}}"></td>
+            </tr>
+            <tr>
+                <td colspan="2" align="center">
+                    <input type="hidden" name="idx" value="{{addr.idx}}">
+	숨김필드
+                    <input type="button" value="수정" onclick="update()">
+			onclick 버튼클릭
+                    <input type="button" value="삭제" onclick="del()">
+                </td>
+            </tr>
+
+자바스크립트 함수
+function update(){
+    document.form1.action="update"
+   현재페이지객체  name form1 action주소
+    document.form1.submit(); 서버에 제출
+}
+
+
+csrfmiddlewaretoken: R7Bn92ZaHy5m6nc5CSPyhBRLTnq68kNE762CbUSfLfjSheVXoJPnbPoVEkbNnPTn
+name: 이철수1
+tel: 02-333-3323
+email: lee@gmail.net
+address: 서울 종로구2
+idx: 2
+
+요청 URL:
+http://127.0.0.1:8000/address/detail?idx=8
+요청 메서드:
+GET
+상태 코드:
+200 OK
+원격 주소:
+127.0.0.1:8000
+참조 페이지 정책:
+same-origin
+detail?idx=2:8 Uncaught TypeError: Cannot set properties of undefined (setting 'action')
+    at update (detail?idx=2:8:34)
+    at HTMLInputElement.onclick (detail?idx=2:41:72)
+
+
+	sqlplus system/1234
+
+
+
+
+	Oracle XE 21C
+		express edition
+
+	Oracle XE 11g
+
+
+model <- h2o.deeplearning(x = features, y = target, 
+  activation = "Rectifier",
+  training_frame = tr_data, ignore_const_cols = FALSE, 
+  hidden = c(50,50))
+
+Confusion Matrix (vertical: actual; across: predicted)  for max f1 @ threshold = 0.312838733498747:
+        0   1    Error     Rate
+0      86  18 0.173077  =18/104
+1       7  94 0.069307   =7/101
+Totals 93 112 0.121951  =25/205
+
+
+
+diff1=df['x'].diff(periods=3).iloc[3:]
+			3차차분
+diff1.plot()
+
+
+
+
+
+
+
+
+
+
+
+
+from statsmodels.tsa.stattools import adfuller
+import numpy as np
+#로그 후 차분한 자료를 adfuller 함수로 안정적인 시계열인지 확인
+diff1=np.log(df['x']).diff(periods=1).iloc[1:]
+result=adfuller(diff1)
+print(result)
+print('ADF Statistic: %f' % result[0])
+print('p-value: %f' % result[1])
+
+p-value: 0.000068
+
+	95% 신뢰수준 하에서 대립가설 채택, 0.05
+
+ ARIMA(1,1,1)(0,0,0)[0]  
+
+	arima(p,d,q)
+	
+	AR(p) 타임스텝   t-1
+	d 차분차수
+	MA(q) 이동평균
+
+
+
+
+
+
+
+
+
+
+n=int(df.shape[0]*.8)
+train = df[:n]
+test = df[n:]
+print(len(df['x']))
+print(train['x'].values)
+print(test['x'].values)
+
+
+
+
+
+from statsmodels.tsa.arima.model import ARIMA
+model = ARIMA(train, order=(1,1,1)).fit()
+predictions = model.predict(start=1, end=len(test), dynamic=False)
+predictions.index=len(train)+(predictions.index-1)
+predictions
+
+
+
+from sklearn.metrics import mean_squared_error
+mse = mean_squared_error(test, predictions)
+rmse = np.sqrt(mse)
+rmse
+
+
+
+
+
+
+
+
+
+ARIMA(1,0,1)(0,0,0)[0] 
+      p d q  계절
+
+
+import numpy as np
+
+def _error(real, pred):
+    return real - pred
+
+def mse(real, pred):
+    return np.mean(np.square(_error(real, pred)))
+
+def rmse(real, pred):
+    return np.sqrt(mse(real, pred))
+
+def mae(real, pred):
+    return np.mean(np.abs(_error(real, pred)))
+
+METRICS = {
+    "mse": mse,
+    "rmse": rmse,
+    "mae": mae,
+}
+
+def evaluate(real, pred, metrics=("mse", "rmse", "mae")):
+    results = {}
+    for name in metrics:
+        try:
+            results[name] = METRICS[name](real, pred)
+        except:
+            results[name] = np.nan
+            
+    return results
+
+
+
+evaluate(test['Ozone'].values, predictions.values)
+
+
+Month	Day	Solar.R	Wind	Temp	Ozone	Result
+0	5	1	190.000000	7.4	67	41	0
+1	5	2	118.000000	8.0	72	36	0
+2	5	3	149.000000	12.6	74	12	0
+3	5	4	313.000000	11.5	62	18	0
+4	5	5	185.931507	14.3	56	42	1
+...	...	...	...	...	...	...	...
+148	9	26	193.000000	6.9	70	30	0
+149	9	27	145.000000	13.2	77	42	1
+150	9	28	191.000000	14.3	75	14	0
+151	9	29	131.000000	8.0	76	18	0
+152	9	30	223.000000	11.5	68	20	0
+153 rows × 7 columns
+
+<Axes: >
+
+
+(-9.19229928768004, 2.107332885165331e-15, 3, 148, {'1%': -3.4753253063120644, '5%': -2.881274703275226, '10%': -2.5772928360116873}, 289.5007747362402)
+ADF Statistic: -9.192299
+p-value: 0.000000
+
+ARIMA
+ ARIMA(1,0,1)(0,0,0)[0] intercept
+153
+[ 41  36  12  18  42  28  23  19   8  42   7  16  11  14  18  14  34   6
+  30  11   1  11   4  32  42  42  42  23  45 115  37  42  42  42  42  42
+  42  29  42  71  39  42  42  23  42  42  21  37  20  12  13  42  42  42
+  42  42  42  42  42  42  42 135  49  32  42  64  40  77  97  97  85  42
+  10  27  42   7  48  35  61  79  63  16  42  42  80 108  20  52  82  50
+  64  59  39   9  16  78  35  66 122  89 110  42  42  44  28  65  42  22
+  59  23  31  44  21   9  42  45 168  73  42  76 118  84]
+[85 96 78 73 91 47 32 20 23 21 24 44 21 28  9 13 46 18 13 24 16 13 23 36
+  7 14 30 42 14 18 20]
+122    43.263794
+123    41.217065
+124    32.372084
+125    31.367439
+126    39.182760
+127    37.133437
+128    34.721790
+129    32.524488
+130    28.020898
+131    38.021264
+132    29.588363
+133    29.722733
+134    28.068885
+135    28.515233
+136    30.030514
+137    29.195982
+138    35.708290
+139    28.445590
+140    34.087496
+141    29.583600
+142    24.619642
+143    26.297945
+144    24.499700
+145    33.398335
+146    39.887411
+...
+149    36.730205
+150    42.063967
+151    67.721669
+152    50.098253
+Name: predicted_mean, dtype: float64
+Output is truncated. View as a scrollable element or open in a text editor. Adjust cell output settings...
+
+{'mse': 644.9881268184589,
+ 'rmse': 25.396616444291528,
+ 'mae': 19.611506650327147}
+
+
+
+
+
+
+
+	타임스텝
+
+	t-3	t-2	t-1	t
+
+	
+
+
+
+	SimpleRNN
+	LSTM
+
+
+
+
+model.add(SimpleRNN(units=10, input_shape=(3, 1)))
+                          출력             타임스텝
+
+model.add(Dense(5, activation='relu'))
+
+model.add(Dense(1, activation='linear'))
+
+model.compile(loss='mse', optimizer='sgd')
+
+model.summary()
+
+
+
+
+
+
+
+
+
+import numpy as np
+a=np.arange(0, 10, 0.5)
+            
+print(len(a),a) #0~10까지 0.5 간격으로 값 생성
+data = np.sin(a)
+print(data)
+print(len(data))
+
+
+
+
+	나는 학교에 간다.
+
+	O	O	나는
+	O	나는	학교에
+	나는	학교에	간다
+
+
+
+timestep = 3 # t-3, t-2, t-1 데이터를 이용하여 t 시점의 값을 예측
+X, y = [], []
+for i in range(timestep, len(data)):
+    X.append(np.array([data[i-j] for j in range(timestep, 0, -1)]))
+    y.append(data[i])
+    
+print(X)    
+print(y)
+
+
+
+X, y = np.array(X).reshape(len(X), 3, 1), np.array(y).reshape(len(y), 1)
+			   샘플수   타임스텝
+
+print(X.shape)
+print(y.shape)
+
+
+model.add(SimpleRNN(units=10, input_shape=(3, 1)))
+                                         타임스텝, 변수개수
+model.add(Dense(5, activation='relu'))
+model.add(Dense(1, activation='linear'))
+			회귀분석
+model.compile(loss='mse', optimizer='sgd')
+		손실		최적
+model.summary()
+
+	input	hidden1		hidden2		hidden3		output
+		순환층
+	(3,1)	time 3		10		5		1
+
+
+
+tensorboard --logdir=c:/logs/20230725-130828
+
+
+
+
+
+	타임스텝 4
+	t-4 t-3 t-2 t-1 t
+
+	    41 36 12 18 42 28 23
+ 	 41 36 12 18 42 28 23
+      41 36 12 18 42 28 23
+   41 36 12 18 42 28 23
+41 36 12 18 42 28 23
+
+	41
+	36
+	12
+	18
+y	42
+
+
+
+
+
+
+
+
+
+
+
+
+
+import tensorflow as tf
+gpus = tf.config.experimental.list_physical_devices('GPU')
+print(gpus)
+#gpu의 메모리를 점진적으로 늘리도록 설정
+tf.config.experimental.set_memory_growth(gpus[0],True)
+
+
+	CPU에서 실행
+
+import tensorflow as tf 
+with tf.device('/:CPU0'):
+    model.fit(X_train_t, y_train, epochs=250, batch_size=64, verbose=1)
+
+
+
+
+import matplotlib.pyplot as plt
+split_date = pd.Timestamp('01-01-2011')
+# 학습용: 2011/1/1까지의 자료
+# 검증용: 이후 자료
+train = df.loc[:split_date, ['price']]
+		0:....
+        
+test = df.loc[split_date:, ['price']]
+		...:끝까지
+ax = train.plot()
+test.plot(ax=ax)
+plt.legend(['train', 'test'])
+
+
+
+
+
+
+from sklearn.preprocessing import MinMaxScaler
+sc = MinMaxScaler()
+sc.fit(train)
+train_sc = sc.transform(train)
+test_sc = sc.transform(test)
+train_sc[:10]
+
+
+
+X_train_t = X_train.reshape(X_train.shape[0], 12, 1)
+				샘플수         타임스텝   변수개수
+X_test_t = X_test.reshape(X_test.shape[0], 12, 1)
+print("최종 DATA")
+print(X_train_t.shape)
+print(X_train_t)
+print(y_train)
+
+
+
+
+from keras.layers import LSTM, SimpleRNN
+from keras.models import Sequential
+from keras.layers import Dense
+model = Sequential()
+
+			(X_train.shape[0], 12, 1)
+
+model.add(LSTM(20, input_shape=(12, 1))) # (timestep, 변수개수)
+              출력노드           
+model.add(Dense(1)) # 출력층의 노드 개수 1
+#mean_squared_error 연속적인 값 예측
+model.compile(loss='mse', optimizer='adam')
+model.summary()
+
+		input		순환		output
+		(12,1)				1	linear 회귀
+
+
+
+y_predicted = sc.inverse_transform(y_pred)
+#print(y_predicted)
+y_tested = sc.inverse_transform(y_test)
+#print(y_tested)
+np.mean(y_tested - y_predicted)
+
+
+
+
+
+
+import matplotlib.pyplot as plt
+pred=model.predict(X_test_t)
+a=np.concatenate((y_train.flatten(), np.zeros(len(y_test))+np.nan))
+b=np.concatenate((np.zeros(len(y_train))+np.nan, pred.flatten()))
+plt.plot(a, 'r-', label='real')
+plt.plot(b, 'b-', label='pred')
+plt.legend()
+plt.show()
+
+Dropout(0.2)	드롭아웃
+	20% off
+
+
+		hidden1		hidden2
+		64==>32		32
+
+return_sequences = True
+
+
+
+
+
+
+
+
+	LSTM
+		타임스텝 10	=> 최종값 전달
+
+
+from sklearn.preprocessing import LabelEncoder
+import numpy as np
+values = df.values
+encoder = LabelEncoder()
+# w_dr 변수 정수인코딩
+values[:,4] = encoder.fit_transform(values[:,4])
+values = values.astype('float32')
+np.unique(values[:,4])
+
+
+def shift(train):
+  timestep = 4
+  X = []
+  y = []
+  for i in range(timestep, len(train)):
+    X.append(train[i-timestep:i,:]) # pollution ~ rain
+    y.append(train[i,0:1]) # pollution
+    
+  return X,y
+
+
+ 샘플수,타임스텝,변수개수
+(43796, 4, 8)
+(43796, 1)
+
+
+
+from keras.models import Sequential
+from keras.layers import Dense, Dropout,LSTM
+model = Sequential()
+model.add(LSTM(units = 50, return_sequences = True, input_shape=(X_train.shape[1], X_train.shape[2])))
+model.add(Dropout(0.2)) 20% 신호 off
+model.add(LSTM(units = 50, return_sequences = True))
+model.add(Dropout(0.2))
+model.add(LSTM(units = 50))
+model.add(Dropout(0.2))
+model.add(Dense(units = 1))
+model.compile(optimizer = 'adam', loss = 'mse')    
+model.summary() 
+
+	X	y
+	독립	종속
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,1082 @@
+인공신경망-tensorflow
+
+정형데이터 분류 실습
+
+	정형데이터
+
+	비정형데이터
+		텍스트
+		이미지
+
+
+	모집단	전수조사
+	샘플	표본조사
+
+	0	1	
+	안전	부도
+	990	10	1000건
+	10	10	20건		under sample
+	
+	980	5
+
+
+	10	5	15/1000
+
+
+	accuracy	정확도	
+
+	precision	정확도(모형)
+
+	recall		재현율	50%	실제 현상
+
+
+
+
+
+
+
+	상관계수
+
+	음의 상관관계	-1.0
+	양의 상관관계	1.0
+
+
+	x,y 	0.95
+		-0.7
+
+
+
+
+
+
+	학습용	검증용
+	80	20
+	70	30
+
+	과적합(과대적합)	over fitting
+	과소적합		under fitting
+
+	학습용	100%	90%
+	검증용	70%	85%
+
+	
+	input	hidden	output
+	입력	계산	출력
+
+
+
+
+
+
+sns.countplot(x='Result', data=df, palette=colors)
+		y='Result'
+
+
+
+
+
+
+
+
+
+
+X = X_samp[train_cols]
+y = y_samp['Result']
+df_samp["Result"].value_counts()
+#상관계수 행렬 그래프
+plt.figure(figsize=(20, 20))
+plt.rc('font', size=15)
+
+	df.corr() 상관계수 -1.0 ~ 1.0
+
+
+sns.heatmap(df.corr(), linewidths=0.01, square=True,
+            annot=True, cmap=plt.cm.viridis, linecolor="white")
+plt.title('변수들 간의 상관관계')
+plt.show()
+
+
+
+
+from keras.models import Sequential
+from keras.layers import Dense
+# 3. 모델 구성
+model = Sequential(name='mymodel')
+# 노드개수, 독립변수 개수, 활성화함수 relu
+model.add(Dense(128, input_shape=(len(X_train.columns),), 
+					독립변수
+activation='relu',name='hidden-1'))
+활성화함수			레이어의 이름
+model.add(Dense(64, activation='relu',name='hidden-2'))
+model.add(Dense(64, activation='relu',name='hidden-3'))
+# sigmoid : 0.0~1.0
+model.add(Dense(1, activation='sigmoid',name='output'))
+                 
+	0.0~1.0
+
+# 4. 모델 학습과정 설정
+model.compile(loss='mse', optimizer='adam',
+		손실함수 - 평균제곱오차   최적화함수
+              metrics=['accuracy'])
+		성능측정기준
+
+
+
+from sklearn.preprocessing import StandardScaler
+scaler=StandardScaler() #평균 0, 표준편차 1로 만드는 스케일러
+scaler.fit(X_train)
+	패턴 분석
+X_train_scaled=scaler.transform(X_train)
+	변환
+X_test_scaled=scaler.transform(X_test)
+
+
+
+
+
+
+
+from datetime import datetime  
+import tensorflow as tf  
+logdir="c:/logs/" + datetime.now().strftime("%Y%m%d-%H%M%S")  
+logdir
+'c:/logs/20230720-095258'
+#tensorboard --logdir=로그파일경로
+
+	tensorboard --logdir=c:/logs/20230720-095258
+
+
+# pip install tensorboard
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)  
+# 5. 모델 학습
+hist = model.fit(X_train_scaled, y_train, epochs=500,callbacks=[tensorboard_callback])
+
+
+
+4/4 [==============================] - 0s 3ms/step - loss: 0.0016 - accuracy: 1.0000
+[0.0015950064407661557, 1.0]
+	손실		정확도
+accuracy: 100.00%
+1/1 [==============================] - 0s 21ms/step - loss: 0.2971 - accuracy: 0.6897
+[0.29714080691337585, 0.6896551847457886]
+accuracy: 68.97%
+
+	설명력
+
+		로지스틱 회귀분석, 의사결정나무
+	
+
+
+
+#새로운 값 예측
+#일조량 25, 풍량 10.8, 화씨온도 71도일 때의 오존량
+test_set = [[25, 10.8, 71]]
+test_set=scaler.transform(test_set)
+print(model.predict(test_set)) # 1일 확률 14%
+	
+	0.0~1.0
+
+[[0.14546767]]
+
+
+#일조량 20, 풍량 4.3, 화씨온도 70도일 때의 오존량
+test_set = [[20, 4.3, 70]]
+test_set=scaler.transform(test_set)
+print(model.predict(test_set)) # 1일 확률 98.5%
+
+
+
+model.save('c:/data/ozone/ozone.h5')
+
+
+
+
+from flask import Flask, render_template, request
+from keras.models import load_model
+import joblib
+
+app = Flask(__name__)
+	플라스크 앱 생성
+
+
+	url과 함수 연결
+
+	http://localhost:8000/
+
+@app.route('/', methods=['GET'])
+def main():
+    return render_template('ozone/input.html')
+			templates/ozone/input.html
+
+http://localhost:8000/result
+
+@app.route('/result', methods=['POST'])
+def result():
+    model = load_model('c:/data/ozone/ozone.h5')
+	모형
+    scaler = joblib.load('c:/data/ozone/scaler.model')
+	스케일러
+
+<input type="text" name="a">
+
+    a = float(request.form['a'])
+		내장객체     name이 a인 태그의 값
+    b = float(request.form['b'])
+    c = float(request.form['c'])
+    test_set = [[a, b, c]]
+		2차원 변환
+    test_set = scaler.transform(test_set)
+		스케일러 변환
+    rate = model.predict(test_set)
+	모형입력
+		rate [[0.8446644]]
+
+    if rate[0][0] >= 0.5:
+        result = '충분'
+    else:
+        result = '부족'
+    return render_template('ozone/result.html',
+                           rate='{:.2f}%'.format(rate[0][0] * 100), result=result, a=a, b=b, c=c)
+
+
+if __name__ == '__main__':
+	시작
+    app.run(port=8000, threaded=False)
+	플라스크 앱 실행, 포트개방
+
+
+
+
+<!DOCTYPE html>
+	 버전	html5
+<html lang="en">
+<head>	정보
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h2>오존량 예측</h2>
+<form method="post" action="result">
+	전달		데이터 받을 주소
+		http://localhost:8000/result
+
+    일조량 : <input type="text" name="a"><br>
+				변수명    줄바꿈
+    풍량 : <input type="text" name="b"><br>
+    화씨온도 : <input type="text" name="c"><br>
+    <input type="submit" value="확인">
+	서버에 제출
+</form>
+</body>
+</html>
+
+
+	result=72, a=10, b=5
+
+	{{변수명}}
+
+<h2>오존량 예측 결과 : {{result}} (확률: {{rate}})</h2>
+일조량: {{a}}<br>
+풍량: {{b}}<br>
+온도: {{c}}<br>
+<a href="/">Home</a>
+
+
+test_set = [[25, 10.8, 71],[20, 4.3, 70]]
+	2차원
+test_set=scaler.transform(test_set)
+print(model.predict(test_set))
+
+2차원	2행 1열
+rate
+
+[[0.14546755]
+ [0.8446645 ]]
+
+
+
+python
+	result='충분'
+	key	value
+
+
+html
+	{{변수명}}
+	{{key}}
+	{{result}} => '충분'
+	
+
+
+
+
+
+
+
+
+
+    print('결과:',rate)
+결과: [[0.8446644]]
+
+	rate ==> [[0.8446644]] 
+
+python
+rate='{0.84}%'.format(rate[0][0] * 100)
+                       0.8446644 * 100 => 84.46644
+ 	'문자열'.format(데이터)
+
+html
+{{rate}}
+
+key=value
+변수 값
+
+
+from keras import Sequential
+from keras.layers import Dense
+class MyModel(Sequential):
+
+class 클래스이름(상위클래스)
+			len(X_train.columns), [128,64,32],1
+    def __init__(self, input_nodes, hidden_layers,num_classes):
+	초기화함수
+
+        super(MyModel, self).__init__(name='my_model')
+		상위클래스의	초기화함수 호출
+        self.num_classes = num_classes
+        self.add(Dense(128, input_shape=(input_nodes,), activation='relu'))
+        self.add(Dense(64, activation='relu'))
+        self.add(Dense(32, activation='relu'))
+        self.add(Dense(num_classes, activation='sigmoid'))
+
+
+	input	h1	h2	h3	output
+	8	128	64	32	1
+
+
+		0      1
+		
+	0.7	[0.3, 0.7]
+	1
+	0
+	1
+
+
+
+
+
+
+
+
+
+
+
+
+model = MyModel(len(X_train.columns), [128,64,32],1)
+객체       생성
+
+
+
+
+
+	StandardScaler	표준화, 평균 0, 표준편차 1
+	MinMaxScaler	정규화, 0.0~1.0
+	RobustScaler	outlier
+
+
+from keras.callbacks import EarlyStopping  
+from keras.callbacks import ModelCheckpoint
+es = EarlyStopping(monitor='val_loss', patience=3)
+	조기학습		평가기준               임계치
+# 조기학습 종료시 가장 성능이 좋았던 모형 저장
+mc = ModelCheckpoint('best_model_school.h5', monitor='val_loss', save_best_only=True)
+# 5. 모델 학습
+hist = model.fit(X_train_scaled, y_train, epochs=50, validation_split=0.2, callbacks=[es, mc])
+#hist = model.fit(X_train, y_train, epochs=50, validation_split=0.2, callbacks=[es, mc])
+
+
+
+
+
+
+
+	교차검증, 하이퍼 파라미터 최적화
+
+	cross validation
+
+
+	학습용:검증용
+	8	2
+
+	3회, 5회
+
+	3 fold, 5 fold
+
+	1000건
+
+	200	200	200	200	200
+	test
+		test
+			test
+				test
+					test
+
+	88%	89%	91%	85%	99%
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense
+from sklearn.model_selection import cross_val_score
+from sklearn.datasets import make_classification
+np.random.seed(0)
+	랜덤 시드 기준값
+number_of_features = 100
+	변수개수
+features, target = make_classification(n_samples = 10000,
+                              n_features = number_of_features,
+                              n_informative = 3,
+                              n_redundant = 0,
+                              n_classes = 2,
+                              weights = [.5, .5],
+                              random_state = 0)
+
+from scikeras.wrappers import KerasClassifier
+
+def create_network():
+    network =Sequential()
+    network.add(Dense(units=16, activation="relu", input_shape=(number_of_features,)))
+    network.add(Dense(units=16, activation="relu"))
+    network.add(Dense(units=1, activation="sigmoid"))
+    network.compile(loss="binary_crossentropy", 
+                    optimizer="rmsprop", 
+                    metrics=["accuracy"])
+    return network
+
+
+	input	h1	h2	output
+	100	16	16	1	이진분류 0/1 sigmoid
+
+	binary_crossentropy 이진분류 - sigmoid
+	categorical_crossentropy 다분류 - softmax
+
+
+neural_network = KerasClassifier(model=create_network,
+					모형
+                                 epochs=10,
+				
+                                 batch_size=100,	미니배치
+                                 verbose=0)
+cross_val_score(neural_network, features, target, cv=3)
+	교차검증					교차검증횟수
+
+array([0.81193761, 0.88358836, 0.8769877 ])
+
+
+epochs = [5, 10]
+batches = [5, 10, 100]
+optimizers = ["rmsprop", "adam"]
+hyperparameters = dict(optimizer=optimizers, epochs=epochs, batch_size=batches)
+grid = GridSearchCV(estimator=neural_network, param_grid=hyperparameters)
+grid_result = grid.fit(features, target)
+
+
+{'batch_size': 5, 'epochs': 10, 'optimizer': 'rmsprop'}
+
+
+
+array([0.55, 0.62, 0.68, 0.62, 0.59, 0.54, 0.63, 0.65, 0.52, 0.56, 0.57,
+       0.54])
+
+
+max(grid_result.cv_results_['mean_test_score'])
+
+
+neural_network = KerasClassifier(model=create_network, verbose=0)				에폭, 미니배치
+
+
+
+epochs = [5, 10]
+batches = [5, 10, 100]
+optimizers = ["rmsprop", "adam"]
+hyperparameters = dict(optimizer=optimizers, epochs=epochs, batch_size=batches)
+grid = GridSearchCV(estimator=neural_network, param_grid=hyperparameters)
+grid_result = grid.fit(features, target)
+
+
+
+
+
+
+
+	로지스틱 회귀분석 - logistic , sigmoid 0.0~1.0
+	의사결정나무 - 규칙기반
+	랜덤포레스트
+	사례기반추론 
+	SVM - support vector machine
+	인공신경망
+
+
+
+
+train_cols = df.columns[0:8]
+			start:stop:step
+print(train_cols)
+X = df[train_cols] # 독립변수
+y = df["Label"] # 종속변수
+
+
+#로지스틱 회귀분석
+from sklearn.linear_model import LogisticRegression
+logit = LogisticRegression(random_state=10,max_iter=1000)
+						최대반복횟수
+logit.fit(X_train, y_train)
+print("학습용:",logit.score(X_train, y_train))
+print("검증용:",logit.score(X_test, y_test))
+
+
+logit.predict(X_test)
+
+logit.predict_proba(X_test)
+	확률
+
+	0확률		1확률
+array([[1.60714806e-01, 8.39285194e-01],
+	0.16		0.83 83%
+       [6.87916720e-01, 3.12083280e-01],
+       [1.06954570e-01, 8.93045430e-01],
+
+
+
+from sklearn.preprocessing import StandardScaler
+scaler= StandardScaler()
+scaler.fit(X_train)
+	학습용 분석
+X_train_scaled = pd.DataFrame(scaler.transform(X_train))
+	학습용 변환
+X_test_scaled = pd.DataFrame(scaler.transform(X_test))
+	검증용 변환
+
+
+학습용: 0.9887640449438202
+검증용: 0.9943820224719101
+
+
+from sklearn.tree import DecisionTreeClassifier
+tree = DecisionTreeClassifier(random_state=10)
+	의사결정나무 - 규칙기반
+tree.fit(X_train_scaled, y_train)
+print("학습용:",tree.score(X_train_scaled, y_train))
+print("검증용:",tree.score(X_test_scaled, y_test))
+
+학습용: 1.0
+검증용: 0.9719101123595506
+
+
+# max_depth 가지치기
+tree = DecisionTreeClassifier(max_depth=4, random_state=10)
+tree.fit(X_train_scaled, y_train)
+score_tr=tree.score(X_train_scaled, y_train)
+score_te=tree.score(X_test_scaled, y_test)
+print("학습용:",score_tr)
+print("검증용:",score_te)
+
+	entropy	혼잡도
+		0	1
+			50:50	
+		100:0
+		0:100
+
+	gini
+		0	0.5
+
+
+
+#트리를 만드는 결정에 각 특성이 얼마나 중요한지를 평가하는 특성 중요도 적용
+#0~1 사이의 값(0 전혀 사용되지 않음 ~ 1 완벽하게 타겟 클래스 예측)
+import numpy as np
+def plot_tree(model):
+    n_features = X.shape[1]
+		변수의 개수
+    plt.rcParams["figure.figsize"]=(16,9)
+				그래프 사이즈
+    plt.barh(range(n_features), model.feature_importances_, align='center')
+    plt.yticks(np.arange(n_features), train_cols)
+    plt.xlabel("특성 중요도")
+    plt.ylabel("특성")
+    plt.ylim(-1, n_features)
+
+plot_tree(tree)
+#특성 중요도 :
+
+
+	앙상블학습
+	대중의 지혜
+
+#랜덤포레스트
+from sklearn.ensemble import RandomForestClassifier
+#100개의 트리로 구성된 랜덤 포레스트
+forest = RandomForestClassifier(n_estimators=100, 
+				모형의 개수
+random_state=10)
+forest.fit(X_train_scaled, y_train)
+score_tr=forest.score(X_train_scaled, y_train)
+score_te=forest.score(X_test_scaled, y_test)
+print("학습용:",score_tr)
+print("검증용:",score_te)
+
+
+	사례기반 추론
+	
+	k 이웃의 수 2
+
+     o
+	*
+	    x	
+O
+
+	유클리드 거리 - 직선
+	맨해튼 거리
+
+#knn
+from sklearn.neighbors import KNeighborsClassifier
+import numpy as np
+train_rate = []
+test_rate = []
+# 새로운 데이터 포인트에 가장 가까운 k개의 이웃을 찾는다.
+# k의 값에 따라 결과가 달라지므로 어떤 값이 최적인지 찾아내는 것이 필요함
+# 1 에서 10 까지 n_neighbors 를 적용
+neighbors = range(1, 11)
+for n in neighbors:
+    # 모델 생성
+    knn = KNeighborsClassifier(n_neighbors=n)
+				이웃의 수
+    knn.fit(X_train_scaled, y_train)
+    # 학습용 데이터셋의 정확도
+    train_rate.append(knn.score(X_train_scaled, y_train))
+    # 검증용 데이터셋의 정확도
+    test_rate.append(knn.score(X_test_scaled, y_test))
+test_arr=np.array(test_rate) #검증용 데이터셋의 정확도
+max_rate=np.max(test_arr) #가장 좋은 정확도
+idx=np.where(test_arr == max_rate)[0][0] #가장 성능이 좋은 인덱스
+print("최적의 k:",neighbors[idx])
+print("최고 정확도:",test_rate[idx])
+
+	support vector machine
+	서포트 	벡터	머신
+
+
+				o
+
+		o
+					x
+
+			x	
+
+
+
+#svm
+from sklearn.svm import SVC
+svm = SVC(random_state=10)
+svm.fit(X_train_scaled, y_train)
+print("학습용:",svm.score(X_train_scaled, y_train))
+print("검증용:",svm.score(X_test_scaled, y_test))
+
+	C	- 오차에 대한 패널티
+	gamma	- 개별 샘플의 영향력
+
+
+#최적의 C value와 gamma value를 찾는 과정
+import numpy as np
+train_rate = []
+test_rate = []
+c_values = [0.001, 0.01, 0.1, 1, 10, 100, 1000]
+g_values = [0.0001, 0.001, 0.01, 0.1]
+for n in c_values:
+    for g in g_values:
+        # 모델 생성
+        svm = SVC(C=n,gamma=g,random_state=10)
+        svm.fit(X_train_scaled, y_train)
+        # 학습용 데이터셋의 정확도
+        train_rate.append([n,g,svm.score(X_train_scaled, y_train)])
+        # 검증용 데이터셋의 정확도
+        test_rate.append([n,g,svm.score(X_test_scaled, y_test)])
+train_arr=np.array(train_rate) #검증용 데이터셋의 정확도
+test_arr=np.array(test_rate) #검증용 데이터셋의 정확도
+max_rate=np.max(test_arr[:,2]) #가장 좋은 정확도
+idx=np.argmax(test_arr[:,2]) #가장 성능이 좋은 인덱스
+print("최적의 c:",test_rate[idx][0])
+print("최적의 gamma:",test_rate[idx][1])
+print("최고 정확도:",test_rate[idx][2])        
+
+
+
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.optimizers import SGD
+model = Sequential()
+model.add(Dense(64,input_shape=(X.shape[1],),activation='relu'))
+model.add(Dense(64,activation='relu'))
+model.add(Dense(1,activation='sigmoid'))
+sgd = SGD(learning_rate=0.01)  
+	확률적 경사 하강법
+model.compile(loss='binary_crossentropy', 
+			
+optimizer=sgd, metrics=['accuracy'])
+
+
+from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau, CSVLogger
+es = EarlyStopping(monitor='val_loss', patience=5)
+# 학습 과정에서 만들어진 최적의 파라미터 조합으로 모형을 저장
+mc = ModelCheckpoint("school_best.h5", save_best_only=True)
+# 학습이 잘 안될 때 학습률을 동적으로 조절하는 옵션
+rlr = ReduceLROnPlateau(factor=0.1, patience=5) 
+#기존 학습률*factor (배수)
+# 학습 과정의 주요 history를 csv로 저장
+csvlogger = CSVLogger("mylog.csv")  
+hist = model.fit(X_train_scaled, y_train, validation_split=0.2, epochs=500, callbacks=[es, mc, rlr, csvlogger])
+
+
+
+
+
+	데이터 수집 => 전처리 => 후보변수 => 유의변수 선택
+
+		전진선택법
+		후진제거법
+
+
+	0
+	0
+	0
+	0
+	0
+	1
+	2
+	0
+
+
+import statsmodels.api as sm
+model=sm.Logit(y,X)
+	      종속, 독립
+result=model.fit()
+	학습
+print(result.summary2())
+	모형 요약
+#모델의 설명력 62%
+#citations 변수는 유의하지 않음
+
+
+======================================================================
+Model:                Logit             Method:            MLE        
+Dependent Variable:   Label             Pseudo R-squared:  0.620      
+					모형의 설명력
+					0.0~1.0
+Date:                 2023-07-20 15:03  AIC:               484.2592   
+No. Observations:     890               BIC:               522.5889   
+Df Model:             7                 Log-Likelihood:    -234.13    
+Df Residuals:         882               LL-Null:           -616.90    
+Converged:            1.0000            LLR p-value:       5.0478e-161
+No. Iterations:       8.0000            Scale:             1.0000     
+----------------------------------------------------------------------
+                        Coef.  Std.Err.    z    P>|z|   [0.025  0.975]
+			회귀계수			p-value
+			기울기			유의확률
+----------------------------------------------------------------------
+teaching               -0.0665   0.0155 -4.2972 0.0000 -0.0969 -0.0362
+international          -0.0469   0.0087 -5.4059 0.0000 -0.0639 -0.0299
+research                0.1928   0.0164 11.7796 0.0000  0.1607  0.2249
+citations              -0.0002   0.0062 -0.0378 0.9698 -0.0124  0.0120
+	의심
+
+income                 -0.0295   0.0059 -5.0230 0.0000 -0.0411 -0.0180
+num_students           -0.0000   0.0000 -3.5819 0.0003 -0.0001 -0.0000
+student_staff_ratio    -0.1068   0.0173 -6.1843 0.0000 -0.1406 -0.0729
+international_students  5.0004   1.7421  2.8703 0.0041  1.5859  8.4150
+			기울기
+
+
+
+
+	
+
+
+
+	가설 검정
+
+		반증법
+
+		귀무가설 H0
+
+
+	신약 개발, 효과 있다
+
+	귀무: 효과 없다
+	대립: 효과 있다 - 내 주장
+		p-value 점근유의확률
+		5% 95% 신뢰수준
+
+		0.05 5%
+
+
+
+
+
+
+
+
+
+
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
+
+	작업순서
+
+pipe = Pipeline([
+    ('scaler', StandardScaler()),
+      변수명       모형
+
+	scaler= StandardScaler()
+    ('clf', LogisticRegression(random_state=0)),
+     '변수명'
+])
+params = {
+     '변수명__파라미터'
+     'clf__C': [0.0001, 0.001, 0.01, 0.1, 1.0, 10, 100],
+}
+grid = GridSearchCV(pipe, params, scoring='accuracy', cv=3)
+grid.fit(X, y)
+print(grid.best_params_)
+print(grid.best_score_)
+
+
+
+
+#의사결정나무
+from sklearn.tree import DecisionTreeClassifier
+pipe = Pipeline([
+    ('scaler', StandardScaler()),
+    ('clf', DecisionTreeClassifier(random_state=0)),
+])
+params = {
+     'clf__max_depth': list(range(3,6))
+		가지치기 레벨      3~5
+}
+grid = GridSearchCV(pipe, params, scoring='accuracy', cv=3)
+grid.fit(X, y)
+print(grid.best_params_)
+print(grid.best_score_)
+
+
+
+#랜덤포레스트
+from sklearn.ensemble import RandomForestClassifier
+pipe = Pipeline([
+    ('scaler', StandardScaler()),
+    ('clf', RandomForestClassifier(random_state=0)),
+])
+params = {
+        'clf__max_depth': list(range(3,6)),
+        'clf__n_estimators': list(range(10,110,10)),
+		분류모형수			10,20,30,,,,100
+}
+grid = GridSearchCV(pipe, params, scoring='accuracy', cv=3)
+grid.fit(X, y)
+print(grid.best_params_)
+print(grid.best_score_)
+
+
+#knn
+from sklearn.neighbors import KNeighborsClassifier
+pipe = Pipeline([
+    ('scaler', StandardScaler()),
+    ('clf', KNeighborsClassifier()),
+])
+params = {
+       'clf__n_neighbors': list(range(1,11)),
+		이웃의 수		1~10
+}
+grid = GridSearchCV(pipe, params, scoring='accuracy', cv=3)
+grid.fit(X, y)
+print(grid.best_params_)
+print(grid.best_score_)
+
+#인공신경망
+from sklearn.neural_network import MLPClassifier
+pipe = Pipeline([
+    ('scaler', StandardScaler()),
+    ('clf', MLPClassifier(random_state=0, max_iter=5000)),
+])
+params = {
+        'clf__hidden_layer_sizes': [(50,), (100,), (50,50), (100,100)],
+        'clf__activation': ['tanh', 'relu'],
+        'clf__alpha': [0.001, 0.01, 0.1]
+}
+grid = GridSearchCV(pipe, params, scoring='accuracy', cv=3)
+grid.fit(X, y)
+print(grid.best_params_)
+print(grid.best_score_)
+
+{'clf__activation': 'tanh', 'clf__alpha': 0.1, 'clf__hidden_layer_sizes': (100,)}
+0.9100539933873266
+
+
+#svm
+from sklearn.svm import SVC
+pipe = Pipeline([
+    ('scaler', StandardScaler()),
+    ('clf', SVC(random_state=0)),
+])
+params = {
+        'clf__C': [0.001, 0.01, 0.1, 1, 10, 100, 1000],
+        'clf__gamma': [0.0001, 0.001, 0.01, 0.1],
+}
+grid = GridSearchCV(pipe, params, scoring='accuracy', cv=3)
+grid.fit(X, y)
+print(grid.best_params_)
+print(grid.best_score_)
+
+
+
+
+neural_network = KerasClassifier(model=create_network, verbose=0)
+# 하이퍼파라미터 탐색 영역을 정의
+pipe=Pipeline([
+    ('scaler',StandardScaler()),
+    ('clf',neural_network)
+])
+params={
+    'clf__epochs': [50, 100],
+    'clf__batch_size': [32,64,128],
+    'clf__optimizer': ["rmsprop", "adam"],
+}
+grid=GridSearchCV(pipe,params,scoring='accuracy',cv=3)
+grid_result = grid.fit(X, y)
+
+
+{'clf__batch_size': 64, 'clf__epochs': 50, 'clf__optimizer': 'adam'}
+
+
+
+======================================================================
+Model:                 Logit             Method:            MLE       
+Dependent Variable:    class             Pseudo R-squared:  0.576     
+						설명력
+Date:                  2023-07-20 16:11  AIC:               14827.2519
+No. Observations:      30000             BIC:               14985.1220
+Df Model:              18                Log-Likelihood:    -7394.6   
+Df Residuals:          29981             LL-Null:           -17422.   
+Converged:             1.0000            LLR p-value:       0.0000    
+No. Iterations:        9.0000            Scale:             1.0000    
+----------------------------------------------------------------------
+         Coef.    Std.Err.      z    P>|z|      [0.025       0.975]   
+	기울기			     유의확률
+
+
+	범주형 : 오즈비(승산비)
+	수치형
+
+----------------------------------------------------------------------
+seoul   -0.6686  607574.5247 -0.0000 1.0000 -1190824.8549 1190823.5177
+incheon -3.3275  613793.2014 -0.0000 1.0000 -1203015.8963 1203009.2413
+gyungi  -0.1728  609156.2879 -0.0000 1.0000 -1193924.5579 1193924.2124
+male    -2.2940 2663300.4737 -0.0000 1.0000 -5219975.3024 5219970.7144
+female  -1.8749 2657657.8816 -0.0000 1.0000 -5208915.6061 5208911.8563
+age10   -4.0532 1227796.3107 -0.0000 1.0000 -2406440.6025 2406432.4962
+age2030  3.3740 1227796.4418  0.0000 1.0000 -2406433.4323 2406440.1804
+age4050  1.0986 1227797.1848  0.0000 1.0000 -2406437.1639 2406439.3612
+age60   -4.5884 1227797.1411 -0.0000 1.0000 -2406442.7653 2406433.5885
+food     1.9413          nan     nan    nan           nan          nan
+drink   -1.2161          nan     nan    nan           nan          nan
+product -4.8940          nan     nan    nan           nan          nan
+max_ta   0.0065       0.0202  0.3228 0.7468       -0.0331       0.0461
+max_ws  -0.0042       0.0289 -0.1446 0.8850       -0.0609       0.0525
+min_ta  -0.0418       0.0205 -2.0386 0.0415       -0.0819      -0.0016
+avg_ta   0.0924       0.0373  2.4787 0.0132        0.0193       0.1654
+avg_rhm -0.0012       0.0020 -0.6059 0.5446       -0.0053       0.0028
+avg_ws   0.0282       0.0452  0.6256 0.5316       -0.0602       0.1167
+sum_rn  -0.0004       0.0022 -0.1713 0.8640       -0.0046       0.0039
+======================================================================
+
+
+	정형데이터
+
+	비정형데이터
+
+	정형+비정형
+
+
+
+	gs25.csv
+	mysql 데이터 처리 실습
+	HeidiSQL
+
+	인공신경망 실습(R)
+
+	클러스터링 실습(Python/R)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

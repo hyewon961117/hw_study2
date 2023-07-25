@@ -1,0 +1,194 @@
+파이참 터미널에서 장고 설치
+pip install django
+
+가상환경이 아닌 프로젝트 만들기
+myweb
+new(가상환경 아닌) exist (파이썬 3.9)
+
+config 폴더 생성
+django-admin startproject config .
+django-admin startproject config 까지만 입력하면 config 디렉토리 하위에 같은 이름의 디렉토리가 하나 더 생겨서 혼동될 수 있으므로 마침표(.)를 입력함
+
+# 슈퍼 유저 생성
+python manage.py migrate
+python manage.py createsuperuser
+
+아이디와 비밀번호만 입력, 이메일은 생략 가능
+username : admin
+password : 1234 (입력해도 빈 화면처럼 나옴)
+
+경고문이 뜨면 y
+
+# 인터넷에서 sqlite expert 설치
+https://www.sqliteexpert.com/download.html
+
+(trial version) 유료버전
+SQLite Expert Personal 5.x 64bit
+
+더하기 버튼으로 sqlite3
+auth_user - data - 사용자계정 만든 것 하나 뜸
+
+# 애플리케이션 생성
+python manage.py startapp address
+address 폴더가 생김
+
+# mysql 패키지 설치
+pip install pymysql
+
+# address 앱을 만든것 설정에 추가
+1) config/settings.py 설정 코드 파일
+INSTALLED_APPS(33번째 코드)에 'address', 추가
+
+2) DB를 mysql로 바꾸는 작업
+HeidiSQL web 계정 비번 1234 만들었으니깐 그 계정으로 변경할 것임
+HeidiSQL에서 데이터베이스 생성
+CREATE DATABASE pyweb;
+SHOW DATABASES;
+
+77번째코드 DATABASES 부분 바꾸기
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'pyweb', # DB
+        'USER': 'web', # id
+        'PASSWORD': '1234', # password
+        'HOST': 'localhost', # host
+        'PORT': '3306', # port
+    }
+}
+
+3) 시간 및 지역 설정 바꾸기
+111번째 코드
+LANGUAGE_CODE = 'ko' 
+TIME_ZONE = 'Asia/Seoul' 
+
+# 설정 변환 후 pymysql로 데이터베이스 설정을 변환했으니 적용시키기
+python manage.py migrate
+
+# 설정 변환 후 pymysql에 슈퍼유저 다시 생성
+python manage.py createsuperuser
+admin 1234 y
+
+USE pyweb;
+SHOW TABLES;
+SELECT * FROM auth_user;
+
+# address/model.py에 아래 코드 추가
+from django.db import models
+
+class Address(models.Model):
+    idx = models.AutoField(primary_key=True) # 필드명 = 자동차증가일련번호 식별자
+    name = models.CharField(max_length=50, blank=True, null=True) # 빈값과 null값 인정
+    tel = models.CharField(max_length=50, blank=True, null=True)
+    email = models.CharField(max_length=50, blank=True, null=True)
+    address = models.CharField(max_length=500, blank=True, null=True)
+
+# address/admin.py에 아래 코드 추가
+from django.contrib import admin
+from address.models import Address
+
+class AddressAdmin(admin.ModelAdmin):
+
+    #화면에 출력할 필드 목록을 튜플로 지정
+    list_display = ('name', 'tel', 'email', 'address')
+
+admin.site.register(Address, AddressAdmin)
+
+
+# 데이터베이스 변경 사항 반영 (터미널)
+python manage.py makemigrations
+python manage.py migrate
+
+# heidisql에서 확인
+SHOW TABLES;
+SELECT * FROM address_address;
+
+# 웹서버 구동 터미널 코드
+python manage.py runserver localhost:80
+링크 클릭시 로켓모양 화면 나옴
+
+http://localhost:80/admin (admin 추가)하면 관리자 화면 열림
+address 추가 김철수 02-222-2222 kim@naver.com 서울 마포구 입력
+
+heidisql에서 확인
+select * from address_address;
+
+# address 폴더에 urls.py 생성해서 아래 코드 입력
+# 내장함수 url import
+from address import views
+from django.urls import path
+
+urlpatterns = [
+    path('', views.home),
+    path('write', views.write),
+    path('insert', views.insert),
+    path('detail', views.detail),
+    path('update', views.update),
+    path('delete', views.delete),
+]
+
+# config의 urls.py 코드에 추가
+from django.contrib import admin
+from django.urls import path, include
+from config import views
+
+urlpatterns = [
+    # 관리자용 사이트
+    path('admin/', admin.site.urls),
+    path('', views.home),
+    path('address/', include('address.urls')),
+]
+
+# config에 view.py 파일 생성해 아래 코드 추가
+from django.shortcuts import render
+
+def home(request):
+    #installed_app에 작성한 첫번째 앱인 address의 index.html 페이지로 출력됨
+    return render(request, 'index.html')
+
+# address 폴더에 templates 폴더 만든 후 index.html 코드 추가
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h2>시작 페이지</h2>
+<a href="admin/">관리자</a><br>
+<a href="address/">주소록</a><br>
+</body>
+</html>
+
+# address 폴더 views.py에 아래 코드 추가
+from django.shortcuts import render
+from address.models import Address
+
+def home(request):
+    items = Address.objects.order_by("name")
+    return render(request, 'address/list.html', {'items': items, 'address_count': len(items)})
+
+def write(request):
+    return render(request, "address/write.html")
+
+def insert(request):
+    addr = Address( name=request.POST['name'], tel=request.POST['tel'], email=request.POST['email'], address=request.POST['address'])
+    addr.save()
+    return redirect("/address")
+
+def detail(request):
+    addr=Address.objects.get(idx=request.GET['idx'])
+    return render(request, 'address/detail.html', {'addr': addr})
+
+def update(request):
+    addr = Address( idx=request.POST['idx'], name=request.POST['name'], tel=request.POST['tel'], email=request.POST['email'], address=request.POST['address'] )
+    addr.save()
+    return redirect("/address")
+
+def delete(request):
+    Address.objects.get(idx=request.POST['idx']).delete()
+    return redirect("/address")
+
+** redirect : 방향 전환, 작업 완료 => 새로운 작업
+** render : 요청한 데이터를 화면을 만들어서 표시하는 작업, 화면(template) 생성
+
