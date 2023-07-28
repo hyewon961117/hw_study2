@@ -12,6 +12,11 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 
+#날짜 포맷 변경을 위한 모듈 로딩
+from django.conf.locale.ko import formats as ko_formats
+#날짜 포맷 설정
+ko_formats.DATETIME_FORMAT = 'Y-m-d G:i:s'
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -38,6 +43,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'address',
+    'memo',
+    'book',
+    'transaction',
 ]
 
 MIDDLEWARE = [
@@ -74,17 +82,29 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# mysql 버전
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'pyweb', # DB
+#         'USER': 'web', # id
+#         'PASSWORD': '1234', # password
+#         'HOST': 'localhost', # host
+#         'PORT': '3306', # port
+#     }
+# }
+
+# oracle 버전
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'pyweb', # DB
-        'USER': 'web', # id
-        'PASSWORD': '1234', # password
-        'HOST': 'localhost', # host
-        'PORT': '3306', # port
+        'ENGINE': 'django.db.backends.oracle',
+        'NAME': 'xe', # 데이터베이스 이름
+        'USER': 'python', # 아이디
+        'PASSWORD': '1234', # 비번
+        'HOST': 'localhost', # 호스트
+        'PORT': '1521', # 포트
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

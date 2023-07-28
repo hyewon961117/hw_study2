@@ -1,0 +1,902 @@
+Django 실습	
+	트랜잭션 처리
+
+텍스트마이닝
+챗봇 만들기
+
+자연어 처리 프로젝트(2차 프로젝트)
+
+
+
+
+
+	transaction
+
+python manage.py startapp transaction
+			   앱이름
+
+
+
+
+
+
+
+
+from django.db import models
+
+
+class Emp(models.Model):
+    empno = models.IntegerField(primary_key=True)
+	사번		정수
+    ename = models.CharField(max_length=50, null=False)
+	이름		문자
+    deptno = models.IntegerField(null=False)
+	부서
+
+
+python manage.py makemigrations
+python manage.py migrate
+
+
+select * from tab;
+
+desc transaction_emp;
+
+
+
+
+import time
+from django.db import transaction
+from django.shortcuts import render
+from transaction.models import Emp
+
+
+def home(request):
+    return render(request, 'transaction/index.html')
+
+
+@transaction.atomic()
+트랜잭션 처리
+def insert(request):
+    start = time.time()
+	시간측정
+    Emp.objects.all().delete()
+	모든 레코드 삭제
+    for i in range(1, 1001):
+		1~1000
+        emp = Emp(empno=i, ename='name' + str(i), deptno=i)
+		
+        emp.save()
+    end = time.time()
+    runtime = end - start
+    cnt = Emp.objects.count()
+	레코드수 카운트
+    return render(request, 'transaction/index.html',
+                  {'cnt': cnt, 'runtime': f'{runtime:.2f}초'})
+
+
+def list(request):
+    empList = Emp.objects.all().order_by('empno')
+    return render(request, 'transaction/list.html', {'empList': empList, 'empCount': len(empList)})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ insert into transaction_emp values (1, 'kim', 10);
+
+ select * from transaction_emp;
+
+ commit;
+	커밋 - 변경사항 확정
+ rollback; 
+	롤백 - 변경사항 취소
+
+select count(*) from transaction_emp;
+
+
+
+
+
+
+delete from transaction_emp;
+
+commit;
+
+
+
+
+모처럼 전국에 비가 내리고 있습니다.
+대부분 밤까지 계속되기 때문에 종일 우산이 필요하겠는데요.
+비의 양도 많고 바람도 강하게 불기 때문에 작은 우산 말고 큰 우산 챙기는 게 더 좋습니다.
+특히 제주와 남해안에서 비바람이 강합니다.
+
+[[4, 4, 1, 4], [4, 4, 4, 2, 4, 3, 4], [1, 4, 4, 4, 4, 4, 2, 4, 3, 3, 4], [4, 4, 4, 4]]
+
+	정수인코딩
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from nltk.tokenize import sent_tokenize
+# 문장 토큰화
+text = sent_tokenize(text)
+	문장 나누기
+print(text)
+
+
+from konlpy.tag import Okt
+okt=Okt()
+text2=[]
+for txt in text:
+    t=okt.nouns(txt)
+		명사 선택
+    text2.append(t)
+    
+text2   
+
+	불용어 제거
+	글자수
+
+[['모처럼', '전국', '비', '있습니다'], ['대부분', '밤', '계속', '때문', '종일', '우산', '필요하겠는데요'], ['비', '양도', '많고', '바람', '강하게', '불기', '때문', '작은', '우산', '우산', '게', '더', '좋습니다'], ['제주', '남해안', '비바람', '강합니다']]
+
+
+vocab = {}
+	단어사전
+sentences = []
+stop_words = ['더', '게']
+for txt in text3:
+    result = []
+    for word in txt:
+        # 불용어 제거
+        if word not in stop_words: #불용어가 아니면
+            result.append(word)
+            if word not in vocab: #새로운 단어이면
+                vocab[word] = 0 # 출현횟수 0으로
+            vocab[word] += 1 #출현횟수 증가
+    sentences.append(result)
+print(sentences)
+
+{'모처럼': 1, '전국': 1, '비': 2, '있습니다': 1, '대부분': 1, '밤': 1, '계속': 1, '때문': 2, '종일': 1, '우산': 3, '필요하겠는데요': 1, '양도': 1, '많고': 1, '바람': 1, '강하게': 1, '불기': 1, '작은': 1, '좋습니다': 1, '제주': 1, '남해안': 1, '비바람': 1, '강합니다': 1}
+
+
+
+
+
+
+
+
+
+
+
+
+
+word_to_index = {}
+i=0
+for word in vocab :
+    if vocab[word] > 1 : # 빈도수가 1보다 큰 단어들만 추가
+        i=i+1
+        word_to_index[word] = i #단어에 번호를 매김
+print(word_to_index)
+
+
+from collections import Counter
+vocab = Counter(words) # 단어의 출현빈도를 쉽게 계산하는 클래스
+print(vocab)
+
+	단어의 출현빈도
+
+	문서1	문서2	문서3	문서4	....
+
+	날씨	날씨	날씨	날씨
+	기자	기자	기자	기자
+
+
+	tf
+
+	df
+
+
+
+{'우산': 1, '비': 2, '때문': 3, '모처럼': 4, '전국': 5}
+
+
+
+[4, 4, 4, 2, 4, 3, 4]
+
+
+
+
+
+
+
+
+
+
+
+from konlpy.tag import Okt  
+okt=Okt()  
+#토근화(형태소 분석)
+token=okt.morphs("나는 학교에 간다 나는 집에 간다")  
+print(token)
+
+['나', '는', '학교', '에', '간다', '나', '는', '집', '에', '간다']
+
+
+
+	조사,어미
+
+	명사, 형용사
+
+
+
+dict_keys(['나', '는', '학교', '에', '간다', '집'])
+나 [1, 0, 0, 0, 0, 0]
+
+	one hot
+
+는 [0, 1, 0, 0, 0, 0]
+학교 [0, 0, 1, 0, 0, 0]
+에 [0, 0, 0, 1, 0, 0]
+간다 [0, 0, 0, 0, 1, 0]
+집 [0, 0, 0, 0, 0, 1]
+
+
+
+def one_hot_encoding(word, word2index):
+    #전체 단어 갯수만큼 0으로 채운 리스트
+    one_hot_vector = [0]*(len(word2index))
+    #해당하는 단어의 인덱스를 찾아서
+    index=word2index[word]
+    #1로 설정(나머지는 0)
+    one_hot_vector[index]=1
+    return one_hot_vector
+key_list=word2index.keys()
+print(key_list)
+for key in key_list:
+    print(key, one_hot_encoding(key,word2index))
+
+
+
+
+
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.utils import to_categorical
+text="나는 학교에 간다 나는 집에 간다"
+t = Tokenizer()
+# 각 단어에 대한 정수 인코딩
+t.fit_on_texts([text])
+print(t.word_index)
+#각 단어에 매핑된 숫자로 변환된 리스트
+sub_text="나는 집에 간다"
+encoded=t.texts_to_sequences([sub_text])[0]
+print(encoded)
+#원핫인코딩
+one_hot = to_categorical(encoded)
+print(one_hot)
+
+나는 집에 간다
+[1, 4, 2]
+[[0. 1. 0. 0. 0.]
+ [0. 0. 0. 0. 1.]
+ [0. 0. 1. 0. 0.]]
+
+
+
+
+
+
+
+from konlpy.tag import Okt
+import re  
+okt=Okt()  
+token=re.sub("[.!#~]","",
+             '비가 오니 마음이 차분해지네요. 요즘 너무 더웠어요. 비가 오니 마음이 기쁘네요.')
+#형태소 분석
+token=okt.morphs(token)  
+word2index={}  #단어 사전(단어와 숫자 인덱스)
+bow=[]  #단어 가방(단어와 출현 횟수)
+for voca in token:  
+    #사전에 없는 단어 추가
+    if voca not in word2index.keys():  
+        word2index[voca]=len(word2index)  
+        #단어의 인덱스와 출현횟수(기본값:1)
+        bow.insert(len(word2index)-1,1)
+    else:
+        #재등장하는 단어의 인덱스
+        index=word2index.get(voca)
+        #단어 카운트 증가
+        bow[index]=bow[index]+1
+            
+print(word2index)  #단어사전(정수인코딩)
+
+
+
+
+from sklearn.feature_extraction.text import CountVectorizer
+#문서 집합에서 단어 토큰을 생성하고 각 단어의 수를 세어 BOW 인코딩한 벡터를 만드는 클래스
+corpus=['모처럼 전국에 비가 내리고 있습니다.']
+line=['전국에 비가 비가']
+vector = CountVectorizer()
+vector.fit(corpus)
+print(vector.vocabulary_) #단어사전
+print(vector.transform(line).toarray()) #단어가 출현한 위치에 출현빈도 표시
+
+
+
+{'모처럼': 1, '전국에': 4, '비가': 2, '내리고': 0, '있습니다': 3}
+[[0 0 2 0 1]]
+
+f=open('c:/data/text/news1.txt')
+corpus=f.read()
+txt=okt.nouns(corpus)
+	명사
+print(txt)
+txt2=[' '.join(txt)]
+print(txt2)
+
+['다음', '달', '경기도', '성남시', '공원', '치킨', '등', '주문', '드론', '이']
+
+ '다음 달 경기도 성남시'
+
+
+
+vector = CountVectorizer(stop_words=['로서','통해'])
+			불용어
+print(vector.fit_transform(txt2).toarray())
+print(vector.vocabulary_)
+
+
+
+
+
+docs = [
+
+  'python 데이터 python 프로그래밍',	tf  term frequency
+
+  '데이터 분석',
+
+  '빅 데이터 분석',
+
+  '데이터 전처리 텍스트 전처리'		df document frequency
+					idf
+]
+		tf x idf
+
+
+
+
+docs = [
+  'python 데이터 python 프로그래밍',
+  '데이터 분석',
+  '빅 데이터 분석',
+  '데이터 전처리 텍스트 전처리'
+]
+vocab=list() #단어사전 리스트
+for doc in docs: #문서
+    for w in doc.split(): #단어	
+		공백 단위
+        vocab.append(w) #단어 추가
+        
+vocab=list(set(vocab)) #중복 단어를 제거한 리스트
+	set() 중복값 제거
+vocab.sort() #오름차순 정렬
+vocab
+
+
+
+
+
+from math import log
+N = len(docs) # 총 문서의 수
+
+def tf(t, d):
+    return d.count(t)
+	문서 내에서의 출현 빈도
+
+def idf(t):
+	df의 역수
+	단어가 몇개의 문서에 출현하는지
+    df = 0
+    for doc in docs:
+        df += t in doc
+    return log(N/(df + 1))
+
+def tfidf(t, d):
+    return tf(t,d)* idf(t)
+
+
+
+
+
+
+from sklearn.feature_extraction.text import CountVectorizer
+corpus = [
+    'you know I want your love',
+    'I like you',
+    'what should I do ',    
+]
+#DTM(Document Term Matrix, 문서 단어 행렬)
+vector = CountVectorizer()
+# 코퍼스로부터 각 단어의 빈도수 계산
+print(vector.fit_transform(corpus).toarray())
+print(vector.vocabulary_)
+
+
+
+
+[[0 1 0 1 0 1 0 1 1]
+ [0 0 1 0 0 0 0 1 0]  'I like you',
+ [1 0 0 0 1 0 1 0 0]] 출현빈도
+
+[[0.         0.46735098 0.         0.46735098 0.         0.46735098
+  0.         0.35543247 0.46735098]
+ [0.         0.         0.79596054 0.         0.         0.
+  0.         0.60534851 0.        ]
+ [0.57735027 0.         0.         0.         0.57735027 0.
+  0.57735027 0.         0.        ]]
+
+{'you': 7, 'know': 1, 'want': 5, 'your': 8, 'love': 3, 'like': 2, 'what': 6, 'should': 4, 'do': 0} 단어사전
+
+
+
+#유클리드 거리
+import numpy as np
+def dist(x,y):  
+    return np.sqrt(np.sum((x-y)**2))
+
+doc0 = np.array((1,1,0,1))
+doc1 = np.array((2,3,0,1))
+doc2 = np.array((1,2,3,1))
+print(dist(doc0,doc1)) #doc0과 doc1의 거리
+print(dist(doc0,doc2))
+
+
+
+
+
+#a,b의 코사인 유사도
+print( dot(a,b) / (norm(a)*norm(b)))
+
+	같은 방향 1
+	직각	0
+	반대 방향 -1
+
+
+import numpy as np
+doc1=np.array([0,1,1,1])
+doc2=np.array([1,0,1,1])
+doc3=np.array([2,0,2,3])
+doc4=np.array([0,2,2,2])
+print(cos_sim(doc1, doc2)) #문서1과 문서2의 코사인 유사도
+print(cos_sim(doc1, doc3)) #문서1과 문서3의 코사인 유사도
+print(cos_sim(doc2, doc3)) #문서2과 문서3의 코사인 유사도
+print(cos_sim(doc1, doc4)) #문서1과 문서4의 코사인 유사도
+#코사인 유사도는 단순한 빈도수보다도 두 벡터의 방향이 완전히 동일한 경우에는 1(유사도가 최대)
+
+
+0.6666666666666667
+0.7001400420140049
+0.9801960588196069
+1.0000000000000002
+
+
+
+from sklearn.feature_extraction.text import CountVectorizer
+corpus = [
+    '매우 좋은 영화네요 매우 추천해요',
+    '매우 볼만한 영화네요.',
+    '조금 볼만한 영화네요 조금 추천해요',    
+    '별로 볼 내용이 없는 것 같아요 추천하지 않아요',        
+]
+#DTM(Document Term Matrix, 문서 단어 행렬)
+vector = CountVectorizer()
+# 코퍼스로부터 각 단어의 빈도수 계산
+print(vector.fit_transform(corpus).toarray())
+print(vector.vocabulary_)
+
+
+[[0 0 2 0 0 0 0 1 0 1 0 1] '매우 좋은 영화네요 매우 추천해요',
+ [0 0 1 0 1 0 0 1 0 0 0 0]
+ [0 0 0 0 1 0 0 1 2 0 0 1]
+ [1 1 0 1 0 1 1 0 0 0 1 0]]	출현빈도
+
+2.23606797749979
+3.1622776601683795
+['python', '파이썬', '데이터']
+['빅데이터', 'python', '파이썬']
+{'데이터', 'python', '빅데이터', '파이썬'}
+{'python', '파이썬'}
+0.5
+2
+1.4142135623730951
+1.4142135623730951
+2.23606797749979
+2.23606797749979
+3.1622776601683795
+0.6324555320336759
+0.6666666666666667
+0.7001400420140049
+0.9801960588196069
+1.0000000000000002
+[[0 0 2 0 0 0 0 1 0 1 0 1]
+ [0 0 1 0 1 0 0 1 0 0 0 0]
+ [0 0 0 0 1 0 0 1 2 0 0 1]
+ [1 1 0 1 0 1 1 0 0 0 1 0]]
+{'매우': 2, '좋은': 9, '영화네요': 7, '추천해요': 11, '볼만한': 4, '조금': 8, '별로': 3, '내용이': 1, '없는': 6, '같아요': 0, '추천하지': 10, '않아요': 5}
+TfidfVectorizer()
+[[0.         0.         0.74205499 0.         0.         0.
+  0.         0.30037873 0.         0.47060133 0.         0.37102749]
+ [0.         0.         0.61366674 0.         0.61366674 0.
+  0.         0.49681612 0.         0.         0.         0.        ]
+ [0.         0.         0.         0.         0.33166972 0.
+  0.         0.26851522 0.84136197 0.         0.         0.33166972]
+ [0.40824829 0.40824829 0.         0.40824829 0.         0.40824829
+  0.40824829 0.         0.         0.         0.40824829 0.        ]]
+
+
+{'매우': 2, '좋은': 9, '영화네요': 7, '추천해요': 11, '볼만한': 4, '조금': 8, '별로': 3, '내용이': 1, '없는': 6, '같아요': 0, '추천하지': 10, '않아요': 5}
+	단어사전
+
+1    '매우 좋은 영화네요 매우 추천해요',
+2    '매우 볼만한 영화네요.',
+3    '조금 볼만한 영화네요 조금 추천해요',    
+4    '별로 볼 내용이 없는 것 같아요 추천하지 않아요',
+
+		1	2		3	4
+1 array([[1.        , 0.60460746, 0.20371485, 0.        ],
+2       [0.60460746, 1.        , 0.33693737, 0.        ],
+3       [0.20371485, 0.33693737, 1.        , 0.        ],
+4       [0.        , 0.        , 0.        , 1.        ]])
+
+
+
+
+Led by Woody, Andy's toys live happily in his room until Andy's birthday brings Buzz Lightyear onto the scene. Afraid of losing his place in Andy's heart, Woody plots against Buzz. But when circumstances separate Buzz and Woody from their owner, the duo eventually learns to put aside their differences.
+
+
+When siblings Judy and Peter discover an enchanted board game that opens the door to a magical world, they unwittingly invite Alan -- an adult who's been trapped inside the game for 26 years -- into their living room. Alan's only hope for freedom is to finish the game, which proves risky as all three find themselves running from giant rhinoceroses, evil monkeys and other terrifying creatures.
+
+
+df=df.head(10000) #1만개의 행으로 실습
+# overview(줄거리) 필드의 결측값이 있는 행의 수
+df['overview'].isnull().sum()
+
+#결측값을 빈값으로 채움
+df['overview'] = df['overview'].fillna('')
+df['overview'].isnull().sum()
+
+
+
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+tfidf = TfidfVectorizer(stop_words='english')
+			불용어
+# overview에 대해서 tf-idf 수행
+tfidf_matrix = tfidf.fit_transform(df['overview'])
+print(tfidf_matrix.shape)
+#단어 갯수 32350
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def get_recommendations(title='Toy Story', cosine_sim=cosine_sim):
+    # 영화의 제목으로 인덱스 조회
+    idx = indices[title]
+    # 해당 영화와의 유사도 계산
+    sim_scores = list(enumerate(cosine_sim[idx]))
+    
+    # 유사도에 따라 정렬, key 정렬기준 필드(두번째값 기준 정렬), reverse 내림차순
+    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+    # 가장 유사한 10개의 영화 리스트
+    sim_scores = sim_scores[1:11]
+    print(sim_scores)
+    # 리스트의 0번 인덱스
+    movie_indices = [i[0] for i in sim_scores]
+    # 가장 유사한 10개의 영화의 제목
+    return df['title'].iloc[movie_indices]
+
+get_recommendations('Toy Story')
+
+
+
+
+
+
+
+[{"id": 28, "name": "Action"}, {"id": 12, "name": "Adventure"}, {"id": 14, "name": "Fantasy"}, {"id": 878, "name": "Science Fiction"}]
+
+
+
+[{"id": 12, "name": "Adventure"}, {"id": 14, "name": "Fantasy"}, {"id": 10751, "name": "Family"}]
+
+
+
+
+#컨텐트 기반 필터링(Content based filtering) :
+#  사용자가 특정 아이템을 선호하는 경우 그 아이템과 비슷한 컨텐츠를 가진 다른 아이템을 추천하는 방식
+import pandas as pd
+df = pd.read_csv('c:/data/movies/tmdb_5000_movies.csv')
+df.head()
+
+
+
+
+
+dict1 = "{'a': 3, 'b': 5}"
+print(type(dict1)) #스트링
+
+
+
+dict2 = eval("{'a': 3, 'b': 5}") #자료형을 스트링에서 딕셔너리로 변환
+print(type(dict2))  
+print(dict2['a'])
+print(dict2['b'])
+
+
+a='print(10)'
+eval(a)
+
+
+#스트링을 딕셔너리 타입으로 변경
+# eval('문자열') - 문자열 내에 포함된 파이썬 명령어를 실행하는 함수
+df['genres'] = df['genres'].apply(eval)
+df['keywords'] = df['keywords'].apply(eval)
+#딕셔너리 내부의 하위 변수들을 합쳐서 문자열 변수 1개에 저장
+df['genres'] = df['genres'].apply(
+    lambda x : [d['name'] for d in x]).apply(lambda x : " ".join(x))
+df['keywords'] = df['keywords'].apply(
+    lambda x : [d['name'] for d in x]).apply(lambda x : " ".join(x))
+
+
+
+
+from sklearn.metrics.pairwise import cosine_similarity
+#코사인 유사도 계산
+genre_c_sim = cosine_similarity(c_vector_genres, c_vector_genres).argsort()[:, ::-1]
+#영화 추천 함수
+def get_recommend_movie_list(data, movie_title, top=5):
+    # 특정 영화 검색
+    target_movie_index = data[data['title'] == movie_title].index.values
+    print(target_movie_index)
+    #코사인 유사도 상위 5행
+    sim_index = genre_c_sim[target_movie_index, :top].reshape(-1)
+    #아이디가 같은 self row 제외
+    sim_index = sim_index[sim_index != target_movie_index]
+    #data frame으로 만들고 vote_count으로 정렬한 뒤 return
+    result = data.iloc[sim_index].sort_values('vote_average', ascending=False)[:10]
+    return result
+
+
+cosine_similarity(c_vector_genres, c_vector_genres)[0][:30]
+
+
+
+
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position
+
+
+docs = []
+for i in df['기사내용']:
+    #명사만 추출
+    docs.append(han.nouns(i))
+for i in range(len(docs)):
+    #명사들 사이에 공백을 붙여서 열거
+    docs[i] = ' '.join(docs[i])
+print(docs[0])
+
+
+
+
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+# BOW (Bag of Words)를 이용한 문서-단어 행렬 생성
+#문서집합에서 단어 토큰을 생성하고 각 단어의 수를 세어서 인코딩한 벡터를 생성(행은 문서번호, 컬럼은 각 단어)
+vec = CountVectorizer()
+	정수인코딩, 단어사전, 출현빈도
+#vec = TfidfVectorizer()
+X = vec.fit_transform(docs)
+df2 = pd.DataFrame(X.toarray(), columns=vec.get_feature_names_out())
+df2
+
+
+
+from sklearn.cluster import KMeans
+#군집수를 3으로 설정
+kmeans = KMeans(n_clusters=3,random_state=10).fit(df2)
+		3개 클러스터
+print(kmeans.labels_)
+
+
+
+
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+#플로팅을 위하여 ca 기법(주성분분석)으로 차원을 2차원으로 축소
+pca = PCA(n_components=2,random_state=10)
+components = pca.fit_transform(df2)
+df3 = pd.DataFrame(data = components, columns = ['component 1', 'component 2'])
+df3.index=df['검색어']
+print(df3)
+kmeans.labels_ == 0
+# x축 : first, y축 : second 번호로 나타낸 후 시각화
+plt.scatter(df3.iloc[kmeans.labels_ == 0, 0],
+            df3.iloc[kmeans.labels_ == 0, 1], s = 10, c = 'red',  label = 'cluster1')
+plt.scatter(df3.iloc[kmeans.labels_ == 1, 0],
+            df3.iloc[kmeans.labels_ == 1, 1], s = 10, c = 'blue', label = 'cluster2')
+plt.scatter(df3.iloc[kmeans.labels_ == 2, 0],
+            df3.iloc[kmeans.labels_ == 2, 1], s = 10, c = 'green', label = 'cluster3')
+plt.legend()
+
+
+import re
+# ^[  ] start, [^ ] not , 한글/영문자만 허용
+def preprocessing(sentence):
+    sentence =re.sub('[^가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z]', ' ', sentence)
+				A             B 대체
+    return sentence
+
+
+	[^가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z]
+
+	^[] start
+	[^....]  not
+
+#content 필드에 preprocessing 함수 적용
+df['content_cleaned'] = df['content'].apply(preprocessing)
+content = df['content_cleaned'].tolist()
+content[0]
+
+
+from sklearn.feature_extraction.text import CountVectorizer,TfidfVectorizer
+# 문서 집합에서 단어 토큰을 생성하고 각 단어의 수를 세어 인코딩한 벡터를 생성
+#vectorizer = CountVectorizer() 
+		정수인코딩+출현빈도
+vectorizer = CountVectorizer(max_features=1000) #단어수 제한
+				상위출현빈도
+#vectorizer = TfidfVectorizer(max_features=1000) #단어수 제한
+X = vectorizer.fit_transform(content)
+X.shape
+
+
+
+
+
+<1x1000 sparse matrix of type '<class 'numpy.int64'>'
+		희소행렬
+	with 76 stored elements in Compressed Sparse Row format>
+
+
+from sklearn.cluster import KMeans
+# k-means 알고리즘 적용
+kmeans = KMeans(n_clusters=3,random_state=10).fit(X)
+		클러스터수 3개
+# labels에 merge
+#df['labels'] = kmeans.labels_
+print(kmeans.labels_)
+print(pd.DataFrame(kmeans.labels_).value_counts())
+
+df2 = pd.DataFrame(X.toarray(), columns=vec.get_feature_names())
+
+df2 = pd.DataFrame(X.toarray(), columns=vec.get_feature_names_out())
+
+
+
+	get_feature_names() => get_feature_names_out()
+
+
+
+
+
+
+from sklearn.cluster import AgglomerativeClustering
+import scipy.cluster.hierarchy as shc
+import matplotlib.pyplot as plt
+cluster = AgglomerativeClustering(n_clusters=3)  #군집수
+cluster.fit_predict(df2)  
+plt.figure(figsize=(10, 7))  
+result=shc.linkage(df2)
+shc.dendrogram(result)
+plt.show()
+
+
+
+
+import glob
+from afinn import Afinn
+pos_review=(glob.glob("c:/data/imdb/train/pos/*.txt"))[20]
+f = open(pos_review, 'r')
+lines1 = f.readlines()[0]
+f.close()
+
+
+
+
+#감성분석 객체
+afinn = Afinn()
+#텍스트 전처리 후 감성점수 산출
+afinn.score(lines1)
+
+
+import glob
+#긍정 텍스트 로딩
+pos_review=(glob.glob("c:/data/imdb/train/pos/*.txt")[:100])
+lines_pos=[]
+
+for i in pos_review:
+    try:
+        f = open(i)
+        temp = f.readlines()[0]
+        lines_pos.append(temp)
+        f.close()
+    except :
+        continue
+
+len(lines_pos)
+
+
+
+
+#단어들에 Tfidf 가중치를 부여한 후 문서-단어 매트릭스로 바꿈
+from sklearn.feature_extraction.text import TfidfVectorizer
+vect = TfidfVectorizer(stop_words=stop_words).fit(total_text)
+			불용어 사전
+X_train_vectorized = vect.transform(total_text)
+X_train_vectorized.index = class_Index
+
+
+
+
+#긍정 리뷰들을 하나씩 불러와서 실험
+def pos_review(model):
+    count_all=0
+    count=0
+    num=100
+    tests1=[]
+    for idx in range(0,num):
+        pos_review_test=(glob.glob("c:/data/imdb/test/pos/*.txt"))[idx]
+        f = open(pos_review_test, 'r',encoding="utf-8")
+        tests1.append(f.readlines())
+        f.close()
+    for test in tests1:
+        pred = model.predict(vect.transform(test))
+        result=pred[0]
+        if result=="pos":
+            count+=1
+        count_all += 1
+    rate= count*100/count_all
+    print(f"긍정 분류정확도:{rate:.1f}%")
+
+

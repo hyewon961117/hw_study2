@@ -1,0 +1,3 @@
+models.py	urls.py		views.py	templates
+테이블 정의	url 매핑	    데이터처리	화면출력
+migrate

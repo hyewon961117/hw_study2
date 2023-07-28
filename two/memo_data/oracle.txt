@@ -1,0 +1,70 @@
+오라클 
+sqlplus system/1234 # 비번이 보임
+sqlplus만 치고 사용자명, 비밀번호 입력하면 비번이 숨겨지게 로그인 가능
+
+
+데이터베이스 > 테이블 스페이스 > 테이블
+XE
+테이블 스페이스 생성
+
+create tablespace 테이블스페이스 이름
+datafile '물리적파일경로' size 초기사이즈
+autoextend on
+next 증가사이즈m 
+maxsize unlimited;
+
+create tablespace myts
+datafile 'pydb.dbf' size 10m
+autoextend on
+next 10m
+maxsize unlimited;
+
+create user 아이디 identified by 비번
+default tablespace 기본테이블스페이스;
+
+--oracle 12c 이상인경우
+# 세션 변경
+alter session set "_ORACLE_SCRIPT"=true;
+
+# 사용자 생성
+create user python identified by 1234
+default tablespace myts;
+
+# 새로운 계정을 만들었으나 권한을 주지 않았음
+# 권한 부여
+
+grant 사용권한 to 아이디
+
+grant connect, resource, dba to python;
+#	DB접속 리소스사용 관리
+
+# 파이참 프로젝트
+# config의 settings의 77번째 코드 DATABASES 부분 오라클로 변경
+# pip install cx_oracle 로 설치 후 
+# 파이참 터미널에서 migrate 해야함 (DB에 적용시켜야함)
+# python manage.py migrate
+
+# cmd에서 exit로 나가고 python/1234로 다시 접속
+# select * from tab; # 테이블 목록 확인
+
+# 파이참 파이썬 터미널에서 슈퍼유저 만들기
+# python manage.py createsuperuser # admin / 1234 / y
+
+# cmd 오라클창에서
+select * from auth_user;
+
+# sqldeveloper 설치한것 압축 풀기
+# c드라이브 바로 아래로 폴더옮기고 설치
+# +버튼
+
+# name : python 계정
+# 사용자 이름 : python
+# 비밀번호 : 1234 # 비밀번호 저장
+# 테스트 클릭 하면 왼쪽 아래 성공 뜨면 됨
+# 저장 - 접속
+
+# 현재라인 실행 - ctrl+enter
+select * from tab;
+select * from auth_user;
+
+

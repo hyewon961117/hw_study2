@@ -1,0 +1,705 @@
+Django 실습(oracle 연동)
+
+시계열분석
+	arima
+	RNN
+
+연관규칙분석
+주성분분석
+
+
+	sqlplus 아이디/비번
+	sqlplus system/1234
+
+	OracleXE
+
+	데이터베이스 > 테이블 스페이스 > 테이블
+	XE
+
+	테이블 스페이스 생성
+
+create tablespace 테이블스페이스이름
+datafile '물리적파일경로' size 초기사이즈
+autoextend on
+next 증가사이즈m
+maxsize unlimited;
+
+create tablespace myts
+datafile 'pydb.dbf' size 10m
+autoextend on
+next 10m
+maxsize unlimited;
+
+
+create user 아이디 identified by 비번
+default tablespace 기본테이블스페이스;
+
+--oracle 12c 이상인 경우
+alter session set "_ORACLE_SCRIPT"=true;
+
+create user python identified by 1234
+default tablespace myts;
+
+grant 권한 to 아이디
+
+grant connect, resource, dba to python;
+       DB접속   리소스사용  관리
+
+pip install cx_oracle
+
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.oracle',
+        'NAME': 'xe', 데이터베이스 이름
+        'USER': 'python', 아이디
+        'PASSWORD': '1234', 비번
+        'HOST': 'localhost', 호스트
+        'PORT': '1521', 포트
+    }
+}
+
+
+create tablespace myts
+datafile 'pydb.dbf' size 10m
+autoextend on
+next 10m
+maxsize unlimited;
+
+create user python identified by 1234
+default tablespace myts;
+
+grant connect, resource, dba to python;
+	settings.py
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'pyweb', # DB
+        'USER': 'web', # id
+        'PASSWORD': '1234', # password
+        'HOST': 'localhost', # host
+        'PORT': '3306', # port
+    }
+}
+
+
+
+
+
+	python manage.py migrate
+			DB에 반영
+
+
+
+
+
+    import cx_Oracle as Database                                   
+ModuleNotFoundError: No module named 'cx_Oracle'  
+
+
+	pip install cx_oracle
+
+	python manage.py migrate
+
+	sqlplus python/1234
+
+	select * from tab;
+
+	python manage.py createsuperuser
+
+	select * from auth_user;
+
+from django.conf.locale.ko import formats as ko_formats
+						줄임, 별칭
+ko_formats.DATETIME_FORMAT='Y-m-d G:i:s'
+			   4자리연도-월-일 시:분:초
+
+from datetime import datetime
+from django.db import models
+
+	모델 클래스 => 테이블
+	migrate
+
+class Memo(models.Model):
+ 
+    idx = models.AutoField(primary_key=True)
+    필드명  자료형	자동증가 일련번호       기본키
+    writer = models.CharField(max_length=50, blank=True, null=True)
+		가변사이즈 문자열	최대		빈값	null 허용
+		최대 4000바이트
+    memo = models.TextField(blank=True, null=True)
+		대용량 텍스트
+    post_date = models.DateTimeField(default=datetime.now, blank=True)
+
+
+
+
+from django.contrib import admin
+from memo.models import Memo
+
+
+class MemoAdmin(admin.ModelAdmin):
+    list_display = ('writer', 'memo')
+		관리자 화면 표시 필드 목록
+
+admin.site.register(Memo, MemoAdmin)
+관리자 화면에 등록
+
+
+
+	desc memo_memo;
+
+이름        널?       유형            
+--------- -------- ------------- 
+IDX       NOT NULL NUMBER(11)    
+WRITER             NVARCHAR2(50) 
+MEMO               NCLOB         
+POST_DATE NOT NULL TIMESTAMP(6)  
+			1970.1.1
+
+
+	url mapping	데이터 처리	화면 처리
+	urls.py		views.py	templates
+
+
+
+
+urlpatterns = [
+    path('', views.home),
+         주소   함수
+    path('insert_memo', views.insert_memo),
+    path('detail', views.detail_memo),
+    path('update_memo', views.update_memo),
+    path('delete_memo', views.delete_memo),
+]
+
+
+from django.shortcuts import render, redirect
+from memo.models import Memo
+
+
+def home(request):
+    memoList = Memo.objects.order_by("-idx")
+				-필드명=>내림차순 정렬
+	select * from memo_memo order by idx desc
+
+
+    return render(request, 'memo/list.html', {'memoList': memoList,
+		템플릿 생성	templates/memo/list.html
+
+                                              'memoCount': len(memoList)})
+
+
+def insert_memo(request):
+    memo = Memo(writer=request.POST['writer'], memo=request.POST['memo'])
+    memo.save()
+	insert into memo_memo values (?,?)
+    return redirect("/memo")
+	레코드 저장 완료 , 목록으로
+
+
+def detail_memo(request):
+    row = Memo.objects.get(idx=request.GET['idx'])
+				글번호
+		select * from memo_memo where idx=?
+    return render(request, 'memo/detail.html', {'row': row})
+
+
+def update_memo(request):
+    memo = Memo(idx=request.POST['idx'],
+                writer=request.POST['writer'],
+                memo=request.POST['memo'])
+    memo.save()
+	update memo_memo set writer=?, memo=? where idx=?
+    return redirect("/memo")
+	목록으로 이동
+
+def delete_memo(request):
+    Memo.objects.get(idx=request.POST['idx']).delete()
+			삭제할 글번호
+	delete from memo_memo where idx=?
+
+    return redirect("/memo")
+	목록으로 이동
+
+	urls.py		views.py	templates
+	url-function	화면 준비,데이터 처리	화면 출력
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+<h2>한줄메모장</h2>
+<form method="post" action="insert_memo">
+    {% csrf_token %}
+    이름 : <input name="writer">
+    메모 : <input name="memo">
+    <input type="submit" value="확인">
+</form>
+<a href="/">Home</a>
+<table border="1">
+    <tr>
+        <th>번호</th>
+        <th>이름</th>
+        <th>메모</th>
+        <th>날짜</th>
+    </tr>
+{'memoList': memoList,
+    key      value                                          'memoCount': len(memoList)})
+    {% for row in memoList %}
+	  개별      리스트
+    <tr>
+        <td>{{row.idx}}</td>
+        <td>{{row.writer}}</td>
+        <td><a href="detail?idx={{row.idx}}">{{row.memo}}</a></td>
+        <td>{{row.post_date}}</td>
+    </tr>
+    {% endfor %}
+</table>
+</body>
+</html>
+
+
+select * from memo_memo;
+
+        <td><a href="detail?idx={{row.idx}}">{{row.memo}}</a></td>
+
+	<a href="주소">텍스트</a>
+
+	detail?idx={{row.idx}}
+	url?변수=값&변수=값&변수=값
+	login?id=kim&pwd=1234
+
+<!DOCTYPE html>
+<html>
+<head>
+    <script>
+function update(){
+    document.form1.action="update_memo"
+    document.form1.submit();
+}
+function del(){
+    document.form1.action="delete_memo"
+    document.form1.submit();
+}
+
+    </script>
+</head>
+<body>
+<form method="post" name="form1">
+    {% csrf_token %}
+    <table border="1">
+        <tr>
+            <td>이름</td>
+            <td><input name="writer" value="{{row.writer}}"></td>
+        </tr>
+        <tr>
+            <td>날짜</td>
+            <td>{{row.post_date}}</td>
+        </tr>
+        <tr>
+            <td>메모</td>
+            <td><input name="memo" value="{{row.memo}}"></td>
+        </tr>
+        <tr>
+            <td colspan="2" align="center">
+                <input type="hidden" name="idx" value="{{row.idx}}">
+                <input type="button" value="수정" onclick="update()">
+                <input type="button" value="삭제" onclick="del()">
+            </td>
+        </tr>
+    </table>
+</form>
+</body>
+</html>
+
+
+
+function del(){
+    if(confirm("삭제할까요?")){
+
+	확인=>true, 취소=>false
+        document.form1.action="delete_memo"
+        document.form1.submit();
+    }
+}
+
+
+
+112
+118
+132
+129
+		X		y
+		112 118 132	129
+		118 132 129	121
+		132 129 121	135
+
+121
+135
+148
+148
+136
+119
+104
+
+
+
+기상청은 이날 오전 11시 브리핑에서 "제5호 태풍 독수리가 북쪽으로 치우쳐 이동하면서 북태평양고기압 가장자리가 북쪽으로 확장해 정체전선도 북상하고 이에 우리나라가 정체전선 영향권에서 벗어나겠다"라면서 "중부지방과 남부지방은 오늘 장마철이 끝나고 제주는 어제 종료한 것으로 본다"라고 설명했다.
+
+	전처리
+		숫자,문장부호,특수문자
+		불용어
+	정수 인코딩
+
+
+                    
+                        1 딸램이가 2 방바닥이 뜨거워 덥다고 3 차고 자면서 감기에 걸렸어요. 낮에는 살짝 미열에 노란콧물까지 나오고.. 그러고 저한테 감기 옮겨줬는데 전 침 삼킬때 목이 너무 아프고 약간의 기침 다른 증상은 없어서 일단 시댁에서 마시는 감기약 먹고 담터 생강차 스틱 타 먹고 집에와서 집근처 24시간하는 병원가서 주사맞고 약먹고 하루 자고 일어나니 그 다음날 다행이도 목은 괜찮아졌는데 기침이..;;;
+
+	설 1
+	시댁 2
+	이불 3
+
+기상청은 이날 오전 11시 브리핑에서 "제5호 태풍
+
+X		 y
+기상청은 이날 오전   11시
+이날 오전 11시	 브리핑에서 
+오전 11시 브리핑에서 제5호
+
+	input	hidden	output
+
+
+
+import pandas as pd
+df = pd.read_csv('c:/data/time/passengers.csv', index_col='Month')
+df
+
+
+
+
+
+from keras.models import Sequential
+from keras.layers import SimpleRNN, Dense
+np.random.seed(0)
+model=Sequential()
+
+					(112, 2, 1)
+					샘플수 타임스텝 변수개수
+model.add(SimpleRNN(units=20,input_shape=(timestep,1)))
+			출력               
+model.add(Dense(10, activation='relu'))
+model.add(Dense(1, activation='linear'))
+		        회귀
+model.compile(loss='mse', optimizer='sgd')
+model.summary()
+
+
+
+from sklearn.metrics import mean_squared_error
+trainPredict = model.predict(X_train)
+testPredict = model.predict(X_test)
+trainPredict = scaler.inverse_transform(trainPredict)
+		스케일링=>원래
+y_train = scaler.inverse_transform([y_train])
+testPredict = scaler.inverse_transform(testPredict)
+y_test = scaler.inverse_transform([y_test])
+
+	RMSE 평균제곱근오차
+
+trainScore = np.sqrt(mean_squared_error(y_train[0], trainPredict[:,0]))
+print(trainScore)
+testScore = np.sqrt(mean_squared_error(y_test[0], testPredict[:,0]))
+print(testScore)
+
+
+from statsmodels.tsa.seasonal import seasonal_decompose
+from pylab import rcParams
+series = air_pollution.pollution_today[:365] #처음 1년간의 자료
+result = seasonal_decompose(series) #시계열 성분 분해
+rcParams['figure.figsize'] = 15, 10
+result.plot()
+plt.show()
+
+
+
+
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+
+# acf와 pacf를 통해 적합한 arima 모형 결정
+# acf(자기상관함수), pacf(부분자기상관함수) , lag 시차
+# lag 0 시점은 읽지 않음
+# lag 3부터 점선 안에 존재함 lag 절단값은 3 => MA(2)
+plot_acf(series, lags=30)
+	자기상관함수  시차
+plot_pacf(series, lags=30)
+# 절단값이 명확하지 않아 AR 모형 확정이 어려운 상태
+plt.show()
+
+
+	이동평균 MA
+
+	arima
+
+	AR   MA(2)
+	0  0    3
+	
+
+
+from tqdm import tqdm
+#시간이 오래걸림
+index = len(df_training)
+yhat = list()
+for t in tqdm(range(len(df_test.pollution_today))):
+    temp_train = air_pollution[:len(df_training)+t]
+    model = ARIMA(temp_train.pollution_today, order=(0, 0, 3))
+    model_fit = model.fit()
+    predictions = model_fit.predict(
+        start=len(temp_train), end=len(temp_train), dynamic=False)
+    yhat = yhat + [predictions]
+
+yhat = pd.concat(yhat)
+resultsDict['ARIMA'] = evaluate(df_test.pollution_today, yhat.values)
+predictionsDict['ARIMA'] = yhat.values
+
+
+def create_time_features(df, target=None):
+    df['date'] = df.index
+    df['hour'] = df['date'].dt.hour
+    df['dayofweek'] = df['date'].dt.dayofweek
+    df['quarter'] = df['date'].dt.quarter
+    df['month'] = df['date'].dt.month
+    df['year'] = df['date'].dt.year
+    df['dayofyear'] = df['date'].dt.dayofyear
+    df['sin_day'] = np.sin(df['dayofyear'])
+    df['cos_day'] = np.cos(df['dayofyear'])
+    df['dayofmonth'] = df['date'].dt.day
+    #df['weekofyear'] = df['date'].dt.weekofyear
+    
+    X = df.drop(['date'], axis=1)
+    if target:
+        y = df[target]
+        X = X.drop([target], axis=1)
+        return X, y
+
+    return X
+
+
+
+
+from sklearn.linear_model import LinearRegression
+reg = LinearRegression()
+	선형회귀분석
+reg.fit(X_train, y_train)
+yhat = reg.predict(X_test)
+resultsDict['LinearRegression'] = evaluate(df_test.pollution_today, yhat)
+predictionsDict['LinearRegression'] = yhat
+
+
+
+from sklearn.ensemble import RandomForestRegressor
+reg = RandomForestRegressor(max_depth=2, random_state=0)
+	          회귀		가지치기
+reg.fit(X_train, y_train)
+yhat = reg.predict(X_test)
+resultsDict['RF'] = evaluate(df_test.pollution_today, yhat)
+predictionsDict['RF'] = yhat
+
+
+from xgboost import XGBRegressor
+	앙상블모형
+reg = XGBRegressor(objective='reg:squarederror', n_estimators=1000)
+							분류기수
+reg.fit(X_train, y_train,verbose=False)  
+yhat = reg.predict(X_test)
+resultsDict['XGBoost'] = evaluate(df_test.pollution_today, yhat)
+predictionsDict['XGBoost'] = yhat
+
+
+from lightgbm import LGBMRegressor
+lightGBM = LGBMRegressor()
+lightGBM.fit(X_train, y_train)
+yhat = lightGBM.predict(X_test)
+resultsDict['Lightgbm'] = evaluate(df_test.pollution_today, yhat)
+predictionsDict['Lightgbm'] = yhat
+
+
+
+from sklearn.svm import SVR
+reg = SVR(kernel='rbf', C=100, gamma=0.01)
+	서포트벡터 회귀    패널티	영향력
+reg.fit(X_train, y_train)
+yhat = reg.predict(X_test)
+resultsDict['SVM'] = evaluate(df_test.pollution_today, yhat)
+predictionsDict['SVM'] = yhat
+
+
+
+
+
+from sklearn.neighbors import KNeighborsRegressor
+reg = KNeighborsRegressor(n_neighbors=2)
+	 사례기반추론 회귀		이웃의수
+reg.fit(X_train, y_train)
+yhat = reg.predict(X_test)
+resultsDict['KNN'] = evaluate(df_test.pollution_today, yhat)
+predictionsDict['KNN'] = yhat
+
+
+
+
+
+
+
+
+
+import tensorflow as tf
+tf.random.set_seed(0)
+
+BATCH_SIZE = 64
+BUFFER_SIZE = 100
+WINDOW_LENGTH = 24
+
+#타임스텝 7로 설정
+def window_data(X, Y, window=7):
+    x = []
+    y = []
+    for i in range(window-1, len(X)):
+        x.append(X[i-window+1:i+1])
+        y.append(Y[i])
+    return np.array(x), np.array(y)
+
+
+X_w = np.concatenate((X_train, X_test))
+y_w = np.concatenate((y_train, y_test))
+
+X_w, y_w = window_data(X_w, y_w, window=WINDOW_LENGTH)
+X_train_w = X_w[:-len(X_test)]
+y_train_w = y_w[:-len(X_test)]
+X_test_w = X_w[-len(X_test):]
+y_test_w = y_w[-len(X_test):]
+
+train_data = tf.data.Dataset.from_tensor_slices((X_train_w, y_train_w))
+train_data = train_data.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat()
+
+val_data = tf.data.Dataset.from_tensor_slices((X_test_w, y_test_w))
+val_data = val_data.batch(BATCH_SIZE).repeat()
+
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM,Dense
+
+dropout = 0.0
+lstm_model = Sequential([
+    LSTM(128, input_shape=X_train_w.shape[-2:], dropout=dropout),
+    Dense(128),
+    Dense(128),
+    Dense(1)
+])
+
+lstm_model.compile(optimizer='rmsprop', loss='mae')
+lstm_model.summary()
+
+
+#이동평균
+# 1050+1000의 평균, 1050+1010의 평균, 1010+1020의 평균, 1020+1040의 평균
+# 어느 시점의 충격이 이틀간 영향을 미친다면 2차이동평균 모형 MA(2) 모델을 추정하게 됨
+# MA(1) 1차 이동평균모형, MA(2) 2차 이동평균모형
+a<-c(1000,1050,1010,1020,1040)
+b <- SMA(a, n=2) # n 갯수
+b
+
+
+
+ARIMA(2,1,2)(1,1,1)[12]
+      p d q  계절성  12개월
+
+birth_arima <- arima(birth, order = c(2,1,2), seasonal = list(order = c(1,1,1), period = 12))
+birth_arima
+
+
+# d = 0 인 경우 AR(2) / MA(3) / ARIMA(1,0,2) 중 선택해서 적용 가능
+# 파라미터가 가장 적은 모형을 선택하는 것을 추천함 => AR(2) 적용 => c(2,0,0)
+
+	ARIMA(1,0,2) 
+              p d q
+	AR(2)
+	ARIMA(2,0,0) 
+
+	MA(3)
+	ARIMA(0,0,3) 
+
+	d 차분차수
+
+
+
+
+
+
+
+
+
+
+
+
+거래ID    양파    감자    버거    맥주     기저귀
+
+1    	0    1    1    0    0
+
+2    	1    1    1    1    0
+
+3    	0    0    0    1    1
+
+4    	1    0    1    1    0
+
+
+
+from mlxtend.preprocessing import TransactionEncoder
+import pandas as pd
+#트랜잭션 자료형으로 변환
+#x축 전체품목, y축 거래아이디(한장의 영수증)
+te = TransactionEncoder()
+te_ary = te.fit(dataset).transform(dataset)
+df = pd.DataFrame(te_ary, columns=te.columns_) #데이터프레임으로 변환
+df
+
+
+from mlxtend.frequent_patterns import apriori
+frequent_itemsets = apriori(df, min_support=0.5, use_colnames=True)
+frequent_itemsets
+#사과를 살 확률은 0.5
+#치즈,생수를 같이 살 확률은 75%
+
+
+from mlxtend.frequent_patterns import association_rules
+rules=association_rules(frequent_itemsets, metric="confidence", min_threshold=0.8)
+rules
+
+#pip install decorator==5.0.9
+import matplotlib.pyplot as plt
+from matplotlib import font_manager, rc
+#한글 처리를 위해 폰트 설정
+font_name = font_manager.FontProperties(fname="c:/Windows/Fonts/malgun.ttf").get_name()
+rc('font', family=font_name)
+import networkx as nx
+# antecedents 선행(~라면), consequents 결과(~이다)
+ga=nx.from_pandas_edgelist(rules,source='antecedents',target='consequents')
+		선행		후행
+
+	사과 => 호두
+	선행	후행
+
+plt.figure(figsize=(20,5))
+nx.draw(ga,with_labels=True,font_family=font_name,font_size=15)
+# source(그래프의 안쪽 노드들), target(그래프의 바깥쪽 노드들)
+
+
+
+
+
+
+

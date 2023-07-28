@@ -1,0 +1,948 @@
+Django 실습	
+	도서관리
+
+연관규칙분석
+주성분분석
+텍스트마이닝
+챗봇 만들기
+
+자연어 처리 프로젝트(2차 프로젝트)
+
+
+
+
+
+	models.py	urls.py		views.py	templates
+	테이블 정의	url 매핑		데이터 처리	화면 출력
+
+	migrate
+
+
+
+
+
+
+
+from django.db import models
+
+
+class Book(models.Model):
+		상위클래스
+    idx = models.AutoField(primary_key=True)
+   필드명   자료형   자동증가일련번호    식별자
+    title = models.CharField(max_length=50, blank=True, null=True)
+    author = models.CharField(max_length=20, blank=True, null=True)
+    price = models.IntegerField(default=0)
+    amount = models.IntegerField(default=0)
+
+
+
+
+
+
+
+	models.py	python manage.py migrate	테이블 생성
+
+	python manage.py makemigrations
+			DB에 반영할 사항 정리
+
+	python manage.py migrate
+			DB에 반영
+
+	select * from tab;
+		테이블 목록
+
+	desc book_book;
+
+	describe 설명, 테이블 구조
+
+		book_book
+		앱이름_클래스이름
+
+
+
+
+
+
+
+
+from django.urls import path
+from book import views
+
+urlpatterns = [
+    path('', views.list),
+       url    function
+    path('write', views.write),
+    path('insert', views.insert),
+    path('edit', views.edit),
+    path('update', views.update),
+    path('delete', views.delete),
+]
+
+
+
+
+from django.shortcuts import render, redirect
+from book.models import Book
+
+
+def list(request):
+    bookList = Book.objects.order_by('-idx')
+		전체레코드            idx 내림차순 정렬
+    return render(request, 'book/list.html', {'bookList': bookList, 'bookCount': len(bookList)})                    변수        값
+
+
+def write(request):
+    return render(request, 'book/write.html')
+
+
+def insert(request):
+
+	클래스(필드명=값, 필드명=값)
+
+    book = Book(title=request.POST['title'], author=request.POST['author'], price=int(request.POST['price']),
+
+	get 방식 : 데이터 요청	request.GET['변수명']
+	post 방식 : 데이터 전달	request.POST['변수명']
+
+                amount=int(request.POST['amount']))
+    book.save()
+	레코드 저장 insert
+    return redirect('/book')
+	저장 완료 => 목록으로 이동
+
+
+def edit(request):
+    row = Book.objects.get(idx=request.GET['idx'])
+				idx=5	1개 선택
+    return render(request, 'book/edit.html', {'row': row})
+
+
+def update(request):
+    book = Book(idx=request.POST['idx'], title=request.POST['title'], author=request.POST['author'],
+                price=int(request.POST['price']), amount=int(request.POST['amount']))
+    book.save()
+    return redirect('/book')
+
+
+def delete(request):
+    Book.objects.get(idx=request.POST['idx']).delete()
+    return redirect('/book')
+
+
+
+
+
+<!DOCTYPE html>
+	html 문서 버전, html 5
+<html lang="ko">
+<head> 문서 정보
+    <meta charset="UTF-8">  정보
+    <title>Title</title> 문서 제목 
+</head>
+<body> 내용
+<h2>도서목록</h2>	h1 ~ h6 제목 태그
+
+def list(request):
+    bookList = Book.objects.order_by('-idx')
+    return render(request, 'book/list.html', {'bookList': bookList, 'bookCount': len(bookList)})
+ 변수명          값
+
+등록된 도서: {{bookCount}}권
+
+	{{변수}} 변수에 저장된 값 출력
+
+<input type="button" value="Home" onclick="location.href='/'">
+				on+이벤트    주소객체   주소   http://localhost
+		onchange
+		onfocus
+		onblur
+<input type="button" value="추가" onclick="location.href='/book/write'">
+<table border="1" width="600px">
+        테두리         가로사이즈 px 픽셀
+    <tr> Table Row 행
+        <td>제목</td>  Table Division 셀
+        <td>저자</td>
+        <td>가격</td>
+        <td>수량</td>
+    </tr>
+
+{'bookList': bookList
+
+    {% for book in bookList %}
+	  개별     리스트
+    <tr>
+        <td><a href="edit?idx={{book.idx}}">{{book.title}}</a></td>
+        <td>{{book.author}}</td>
+        <td>{{book.price}}</td>
+        <td>{{book.amount}}</td>
+    </tr>
+    {% endfor %}
+</table>
+</body>
+</html>
+
+
+	python manage.py runserver
+
+	
+	sqlplus system/1234
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h2>도서 정보</h2>
+<form method="post" action="insert">
+{% csrf_token %}
+<table border="1" width="500px">
+  <tr>
+    <td>제목</td>
+    <td><input name="title" size="40"></td>
+		    변수		request.POST['title']
+  </tr>
+  <tr>
+    <td>저자</td>
+    <td><input name="author"></td>
+  </tr>
+  <tr>
+    <td>가격</td>
+    <td><input type="number" name="price"></td>
+  </tr>
+  <tr>
+    <td>수량</td>
+    <td><input type="number" name="amount"></td>
+  </tr>
+  <tr align="center">
+    <td colspan="2">
+      <input type="submit" value="확인">
+    </td>
+  </tr>
+</table>
+</form>
+</body>
+</html>
+
+class Book(models.Model):
+    idx = models.AutoField(primary_key=True)
+    title = models.CharField(max_length=50, blank=True, null=True)
+    author = models.CharField(max_length=20, blank=True, null=True)
+    price = models.IntegerField(default=0)
+    amount = models.IntegerField(default=0)
+
+
+		idx가 없으면 models.AutoField 처리
+    book = Book(title=request.POST['title'], author=request.POST['author'], price=int(request.POST['price']),
+                amount=int(request.POST['amount']))
+    book.save()
+	primary key 존재 여부 체크
+		없으면 ==> 생성, insert
+		있으면 ==> 기존, update
+
+    book = Book(idx=request.POST['idx'], title=request.POST['title'], author=request.POST['author'],
+                price=int(request.POST['price']), amount=int(request.POST['amount']))
+    book.save()
+
+
+	df["Date"] = pd.to_datetime(df["Date"])
+		=> 
+	df["Date"] = pd.to_datetime(df["Date"],format='mixed')
+
+
+	ax = sns.countplot(x=rfm_data.Cluster_No)
+
+
+
+
+df = pd.read_csv("c:/data/basket/market.csv", sep=';')
+						필드구분자
+
+
+df["Price"] = df["Price"].str.replace(",",".")
+df["Price"] = df["Price"].astype("float64")  
+
+
+# RFM 분석
+# Recency 최근성
+# Frequency 구매 빈도
+# Monetary 구매 금액
+#최근 구매일자
+rec_table = df.groupby(["CustomerID"]).agg({"Date": lambda x: ((today - x.max()).days)})
+rec_table.columns = ["Recency"]
+rec_table.head()
+
+
+	lambda x: ((today - x.max())
+
+	lambda input : output
+
+
+import matplotlib.pyplot as plt
+import numpy as np
+inertia = []
+from sklearn.cluster import KMeans
+for i in np.arange(1,6):
+		1~5
+    kmeans = KMeans(n_clusters = i)
+			군집수
+    kmeans.fit(rfm_scaled)
+    inertia.append(kmeans.inertia_)
+plt.figure(figsize = (12,8))    
+plt.plot(inertia, marker = "o")
+plt.title("KMeans - Elbow", fontsize = 18)
+#엘보우 포인트 : 3
+
+
+
+
+kmeans = KMeans(n_clusters = 3)
+kmeans.fit(rfm_scaled)
+rfm_data["Cluster_No"] = (kmeans.labels_ + 1)
+			0,1,2 => 1,2,3
+rfm_data.head()
+
+
+
+
+#군집별 RFM 확인
+rfm_data.groupby(["Cluster_No"])[["Recency", "Frequency", "Monetary"]].mean()
+# 클러스터1: 중간 레벨의 고객
+# 클러스터2: 최근 구매일자 이력이 없는 고객, 마케팅이 필요함
+# 클러스터3: 프리미엄 고객, 구매금액이 크고 최근에 구매한 이력이 있음.
+
+
+
+	Recency		Frequency	Monetary
+Cluster_No			
+1	68.634429	4.797872	1913.384218
+2	281.745299	1.545299	495.484189
+3	48.760000	58.960000	81979.682000
+
+
+
+
+
+
+from mlxtend.frequent_patterns import apriori
+apr = apriori(basket_new, min_support = 0.02, use_colnames = True)
+apr.sort_values(by = "support", ascending = False)
+
+
+
+	support		구매비율
+	confidence	A => B  비율
+	lift		>1 => 양의 상관관계
+			<1 => 음의 상관관계
+
+
+
+
+from mlxtend.frequent_patterns import association_rules
+rules = association_rules(apr, metric = "lift", min_threshold = 1)
+	연관규칙			기준
+rules.sort_values(by = "confidence", ascending = False)
+
+
+
+ax = sns.countplot(x=rfm_data.Cluster_No)
+
+
+rules2 <- subset(rules1, rhs %in% 'diapers')
+rules2
+
+
+        lhs  rhs
+	A => B
+	선행   후행
+
+
+[1,1,1,1,1,1,1,1,1,1,3,3,3,3,3,4,5,6],
+
+[1,2,1,1,1,1,1,1,1,1,3,4,3,3,3,4,5,6],
+
+
+
+[1.01080967, 1.1237144 , 1.01080967, 1.01080967, 1.01080967,
+       1.04652366, 0.87642192, 1.04652366, 1.15635772, 1.04652366,
+       2.94266667, 3.3355072 , 2.94266667, 2.94266667, 2.94266667,
+       4.16176255, 4.97133333, 6.14683992]
+X=np.array([[1,1,1,1,1,1,1,1,1,1,3,3,3,3,3,4,5,6],
+             [1,2,1,1,1,1,1,1,1,1,3,4,3,3,3,4,5,6],
+             [3,3,3,3,3,1,1,1,1,1,1,1,1,1,1,5,4,6],
+             [3,4,3,3,3,1,2,1,1,1,1,1,1,1,1,5,4,5],
+             [1,1,1,1,1,3,3,3,3,3,1,1,1,1,1,6,4,5],
+             [1,2,1,1,1,3,3,3,2,3,1,1,1,1,1,5,4,5]])
+#주성분 분석(3개의 주성분으로 축소)
+pca = PCA(n_components = 3)
+		주성분의 수
+X_pca = pca.fit_transform(X)
+X_pca[:5]
+
+
+0.54 성분1
+0.42 성분2
+0.02 성분3
+
+
+
+
+	0~255 / 255.0
+
+	254/255 
+
+X_train = X_train.reshape(60000, 784).astype('float32') / 255.0
+
+X_test = X_test.reshape(10000, 784).astype('float32') / 255.0
+
+	0.0~1.0
+
+
+
+
+
+
+
+# 28x28 => 784로 변환
+			(60000,28,28)
+X_train = X_train.reshape(60000, 784).astype('float32') / 255.0
+X_test = X_test.reshape(10000, 784).astype('float32') / 255.0
+		
+		0~255 => 0.0 ~ 1.0  정규화
+
+print(X_train[0])
+print(y_train[:5])
+
+
+#적절한 차원의 수 선택
+# 분산을 95%로 유지하는 차원의 수 계산
+from sklearn.decomposition import PCA
+import numpy as np
+pca = PCA() # 95% 
+pca.fit(X_train)
+cumsum = np.cumsum(pca.explained_variance_ratio_)
+d = np.argmax(cumsum >= 0.95) + 1
+d
+#154
+
+# 분산비율을 직접 지정하는 방식
+pca = PCA(n_components=0.95)
+X_reduced = pca.fit_transform(X_train)
+print(pca.n_components_) #차원(주성분의 수)
+print(np.sum(pca.explained_variance_ratio_)) #분산비율 합계
+
+
+
+
+
+
+
+
+
+
+
+
+import matplotlib.pyplot as plt 
+# 154 차원으로 압축
+pca = PCA(n_components = 154)
+X_reduced = pca.fit_transform(X_train)
+# 784차원으로 복원
+X_recovered = pca.inverse_transform(X_reduced)
+plt.imshow(X_recovered.reshape(60000,28,28)[0])
+
+
+	784 => 154 => 784
+            5% 손실
+
+
+
+
+
+
+
+
+
+
+# 대량의 데이터의 경우 pca를 구현하기 위해 전체 데이터셋을 메모리에 올리는 것이 어려울 수 있음
+# 점진적 pca(Incremental PCA) 알고리즘을 사용하여 미치배치 방법으로 pca를 실행할 수 있음
+from sklearn.decomposition import IncrementalPCA
+n_batches = 100
+inc_pca = IncrementalPCA(n_components=154)
+#미니배치에 해당하는 부분만 사용하므로 메모리가 절약됨
+for X_batch in np.array_split(X_train, n_batches):
+    print(".", end="")
+    inc_pca.partial_fit(X_batch)
+X_reduced = inc_pca.transform(X_train)
+X_recovered_inc_pca = inc_pca.inverse_transform(X_reduced)
+
+
+np.allclose(pca.mean_, inc_pca.mean_)
+		한꺼번    점진적
+
+
+# PCA를 사용하여 분산이 95%가 되도록 차원 축소
+from sklearn.decomposition import PCA
+pca = PCA(n_components=0.95)
+X_train_reduced = pca.fit_transform(X_train)
+
+
+#랜덤 포레스트 모형에 압축된 데이터 입력
+rnd_clf2 = RandomForestClassifier(n_estimators=10, random_state=0)
+rnd_clf2.fit(X_train_reduced, y_train)
+#학습 시간: 9.1초(느려짐)
+#차원 축소가 반드시 학습 시간 단축을 의미하지는 않음
+
+
+
+
+
+
+#multinomial: 소프트맥스 방식의 로지스틱 회귀분석
+#시간이 많이 걸림
+from sklearn.linear_model import LogisticRegression
+log_clf = LogisticRegression(multi_class="multinomial", max_iter=1000, random_state=0)
+log_clf.fit(X_train, y_train)
+#2분 18초
+
+
+
+
+
+
+	텍스트 분류 
+	감성분석(감정분석)
+	텍스트 생성
+	텍스트 요약
+	토픽 모델링
+
+	텍스트 전처리
+
+	숫자, 특수문자, 문장부호 제거
+	조사, 어미 제외
+
+	형태소 분석 - 명사, 형용사
+	품사 태깅
+	
+	불용어 사전
+
+(서울=연합뉴스) 임기창 기자 = 기아가 3개 분기 연속 두 자릿수 영업이익률을 기록하며 현대자동차와 함께 역대 최대 실적을 또다시 경신했다.
+
+
+기아 2분기 영업익 3.4조원…역대 최대기록 경신
+[연합뉴스 자료사진]
+
+
+기아는 27일 서울 양재동 본사에서 경영실적 발표 콘퍼런스콜을 열어 올 2분기 매출이 전년 동기 대비 20.0% 증가한 26조2천442억원, 영업이익은 52.3% 상승한 3조4천30억원으로 잠정 집계됐다고 밝혔다.
+
+2분기 영업이익은 연합인포맥스가 집계한 시장 전망치 3조1천492억원을 8.1% 웃돌았다.
+
+영업이익률은 13.0%로 글로벌 완성차 업계 최고 수준을 달성했다.
+
+경상이익은 전년 대비 40.3% 오른 3조6천823억원, 순이익은 49.8% 증가한 2조8천169억원이었다.
+
+매출과 영업이익, 영업이익률, 순이익 모두 종전 역대 최고였던 지난 1분기 실적을 넘어섰다. 1분기 매출은 23조6천907억원, 영업이익은 2조8천740억원(영업이익률 12.1%), 순이익은 2조1천198억원이었다.
+
+글로벌 판매량은 전년 대비 10.1% 증가한 80만7천772대를 기록했다.
+
+기아 관계자는 "견조한 수요가 유지된 가운데 생산 정상화에 따른 공급 확대로 판매가 증가했고, 고수익 차량 중심의 판매 확대, 인센티브 절감 등 수익 구조 개선이 지속된 가운데 우호적 환율 영향이 더해져 매출과 영업이익 모두 최고 실적을 기록했다"고 말했다.
+
+pulse@yna.co.kr
+
+임기창(pulse@yna.co.kr)
+
+
+
+
+
+
+
+	pip install konlpy
+
+
+s="Hello World"
+print(s.lower()) #소문자로 변환
+print(s.upper()) #대문자로 변환
+
+
+import re
+#숫자 제거
+p=re.compile("[0-9]+")
+	정규표현식   [패턴] + 반복 
+result=p.sub("","올해 들어 서울 지역의 부동산 가격이 30% 하락했습니다")
+           대체         패턴
+print(result)
+
+
+
+
+
+
+
+
+
+import re
+def clean_text(input_data):
+    #텍스트에 포함되어 있는 숫자와 특수문자 제거
+    p=re.compile("[0-9_!@#$%^&*]")
+
+		0-9 숫자
+
+    result=p.sub("",input_data)
+    return result
+
+txt = "올해 들어 서울 지역의 부동산 가격이 30% 하락했습니다!#$_$123"
+print(txt)
+print(clean_text(txt))
+
+
+words=["추석","연휴","민족","대이동","시작","늘어","교통량","교통사고","특히","자동차", "고장","상당수","나타","것","기자"]
+#불용어
+stopwords=["가다","늘어","나타","것","기자"]
+#불용어 제거
+[i for i in words if i not in stopwords]
+
+
+
+
+
+
+
+
+
+words=["추석","연휴","민족","대이동","시작","늘어","교통량","교통사고","특히","자동차", "고장","상당수","나타","것","기자"]
+#불용어
+stopwords=["가다","늘어","나타","것","기자"]
+result=[]
+	빈 리스트
+for word in words:
+    if word not in stopwords:
+	  A not in B   A가 B 안에 없으면
+        result.append(word)
+
+result         
+
+
+
+
+
+
+
+
+C:\Users\사용자계정\AppData\Roaming\nltk_data
+
+
+
+
+
+from nltk.corpus import stopwords
+words=["chief","justice","roberts",",","president","carter",",","president","clinton","president","bush","obama","fellow","americans","and","people","of","the","world","thank","you"]
+[w for w in words if not w in stopwords.words("english")]
+				영어불용어 사전 검사
+
+
+
+from nltk.stem.porter import PorterStemmer
+from nltk.tokenize import word_tokenize
+stm = PorterStemmer()
+txt="cook cooker cooking cooks cookery"
+words=word_tokenize(txt)
+for w in words:
+    print(stm.stem(w),end=" ")
+	어근 추출
+
+
+
+
+from nltk.stem.regexp import RegexpStemmer
+stm = RegexpStemmer('ing')
+print(stm.stem('cooking'))
+print(stm.stem('cookery'))
+print(stm.stem('ingleside'))
+
+
+
+
+
+
+
+
+
+# N-gram : n번 연이어 등장하는 단어들의 연쇄
+# 2회 바이그램, 3회 트라이그램, 보편적으로 영어에만 적용되며 바이그램이 주로 사용됨
+txt = 'Hello'
+# 2-gram이므로 문자열의 끝에서 한 글자 앞까지만 반복함
+for i in range(len(txt) - 1):            
+    # 현재 문자와 그다음 문자 출력
+    print(txt[i], txt[i + 1], sep='') 
+
+
+	Hello
+
+
+
+txt = 'this is python script'
+# 공백을 기준으로 문자열을 분리하여 리스트로 저장
+words = txt.split()                
+
+words ==>	['this','is','python','script']
+
+
+# 2-gram이므로 리스트의 마지막에서 요소 한 개 앞까지만 반복함
+for i in range(len(words) - 1):      
+    # 현재 문자열과 그다음 문자열 출력
+    print(words[i], words[i + 1])  
+
+
+
+
+from nltk import ngrams
+sentence="I love you.  Good morning.  Good bye."
+
+	['I','love','you.','Good',,,,]
+
+grams=ngrams(sentence.split(),2)
+for gram in grams:
+    print(gram,end=" ")
+
+
+
+
+from konlpy.tag import Hannanum
+han=Hannanum()
+txt="""원/달러 환율이 3년 5개월 만에 최고치로 마감하고,
+위안화 환율이 11년 만에 달러당 7위안을 넘었다.
+원/엔 재정환율 역시 100엔당 30원 가까이 뛰었다."""
+#형태소 분석
+print(han.morphs(txt))
+
+
+
+
+
+
+
+from konlpy.tag import Kkma
+kkm=Kkma()
+print(kkm.morphs(txt)) #형태소 분석
+
+
+
+from konlpy.tag import Okt
+okt=Okt()
+print(okt.morphs(txt)) #형태소 분석
+
+
+
+
+import matplotlib.pyplot as plt
+from matplotlib import font_manager, rc
+font_name = font_manager.FontProperties(fname="c:/Windows/Fonts/malgun.ttf").get_name()
+rc('font', family=font_name)
+from nltk import Text
+plt.figure(figsize=(20,6))
+kolaw = Text(okt.nouns(c), name="kolaw")
+            명사추출
+kolaw.plot(30)
+plt.show()
+
+
+
+
+from wordcloud import WordCloud
+font_path = 'c:/windows/fonts/malgun.ttf'
+wc = WordCloud(width = 1000, height = 600, background_color="white", font_path=font_path)
+plt.imshow(wc.generate_from_frequencies(kolaw.vocab()))
+		단어 출현 빈도
+plt.axis("off") 
+plt.show()
+
+
+
+
+import urllib
+import re
+from bs4 import BeautifulSoup
+from nltk.corpus import stopwords  
+import matplotlib.pyplot as plt
+plt.rcParams["figure.figsize"]=(20,16)
+plt.rcParams["font.size"]=15
+res=urllib.request.urlopen('http://python.org/')
+			url 접속, 
+html=res.read()
+	html 코드 
+#알파벳,숫자,_ 문자들만 선택
+tokens=re.split('\W+',html.decode('utf-8'))
+
+		
+
+clean=BeautifulSoup(html,'html.parser').get_text()  
+tokens=[token for token in clean.split()]
+				공백 단위로 
+stop=set(stopwords.words('english'))
+		영어불용어 사전
+clean_tokens= [token for token in tokens
+               if len(token.lower())>1 and (token.lower() not in stop)]
+		소문자로 , 글자수 2글자 이상				불용어가 아닌
+tagged=nltk.pos_tag(clean_tokens)
+	품사 태깅
+#보통명사, 고유명사만 추출
+allnoun=[word for word,pos in tagged if pos in ['NN','NNP']]
+freq_result = nltk.FreqDist(allnoun)
+			출현빈도
+freq_result.plot(50, cumulative=False)
+
+
+
+
+
+from nltk.tokenize import sent_tokenize
+print(sent_tokenize(emma_raw[:1000])[3]) #3번 문장
+
+	문장 나누기
+
+
+from nltk.tokenize import word_tokenize
+word_tokenize(emma_raw[50:100]) #50~99 단어
+	단어 나누기
+
+
+from nltk import Text
+import matplotlib.pyplot as plt
+from nltk.tokenize import RegexpTokenizer
+retokenize = RegexpTokenizer("[\w]+") #특수문자 제거
+
+	\W
+	\w
+
+#retokenize.tokenize(emma_raw[50:100])
+text = Text(retokenize.tokenize(emma_raw))
+plt.rcParams["figure.figsize"]=(15,10)
+plt.rcParams["font.size"]=15
+text.plot(20) #상위 20개의 단어 출력
+plt.show()
+
+
+from nltk import FreqDist
+from nltk.tag import pos_tag
+stopwords = ["Mr.", "Mrs.", "Miss", "Mr", "Mrs", "Dear"]
+		불용어 추가
+
+emma_tokens = pos_tag(retokenize.tokenize(emma_raw))
+		품사 태깅
+# NNP(고유대명사)이면서 필요없는 단어(stop words)는 제거
+names_list = [t[0] for t in emma_tokens if t[1] == "NNP" and t[0] not in stopwords]
+#FreqDist : 문서에 사용된 단어(토큰)의 사용빈도 정보를 담는 클래스
+#Emma 말뭉치에서 사람의 이름만 모아서 FreqDist 클래스 객체 생성
+fd_names = FreqDist(names_list)
+#전체 단어의 수, "Emma"라는 단어의 출현 횟수, 확률
+fd_names.N(), fd_names["Emma"], fd_names.freq("Emma")
+#most_common 메서드를 사용하면 가장 출현 횟수가 높은 단어를 찾는다.
+fd_names.most_common(5)
+
+
+UnicodeDecodeError: 'cp949' codec can't decode byte 0xe2 in position 5965: illegal multibyte sequence
+
+	ms949, cp949, euc-kr	2바이트=>1글자
+	utf-8			3바이트=>1글자
+
+
+
+from nltk.tokenize import RegexpTokenizer
+from nltk.corpus import stopwords
+#숫자,특수문자 제거
+tokenizer = RegexpTokenizer('[\w]+')
+#불용어 사전
+stop_words = stopwords.words('english')
+words=''
+#모든 단어를 소문자로 변환
+for line in lines:    
+    words += line.lower()
+    
+#print(words[:5])
+#단어 단위로 토큰화
+tokens = tokenizer.tokenize(words)
+#불용어 제거
+tokens2 = [i for i in list(tokens) if not i in stop_words]
+					불용어가 아닌 단어들
+#글자수 1인 단어들 제거
+tokens3 = [i for i in tokens2 if len(i)>1]
+				글자수 2 이상
+
+
+
+from konlpy.tag import Hannanum
+han = Hannanum()
+	
+temp = []
+for i in range(len(lines)):
+    #명사만 추출
+    a=lines[i].strip()	공백 제거
+	' 나는 '
+	'나는'
+    temp.append(han.nouns(a))
+
+		명사 추출
+
+
+
+
+
+
+
+def flatten(items):
+    flatList = []
+    for elem in items:
+        if type(elem) == list:
+		자료형이 list 타입이면
+            for e in elem:
+                flatList.append(e)
+        else:
+            flatList.append(elem)
+    return flatList
+
+word_list=flatten(temp)
+# 두글자 이상인 단어만 추출
+word_list=pd.Series([x for x in word_list if len(x)>1])
+					글자수 2이상
+#단어별 출현 빈도
+word_list.value_counts().head(10)
+
+#불용어 처리
+stopwords=['2곳','자리']
+word_list2=[i for i in word_list if i not in stopwords]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
