@@ -1,0 +1,894 @@
+Django 실습	
+	저장 프로시저 실습
+
+텍스트마이닝
+챗봇 만들기
+
+자연어 처리 프로젝트(2차 프로젝트)
+
+
+
+
+
+
+
+execute memo_insert_p('김철수', '메모...', '192.168.0.10' );
+
+=> execute memo_insert_p('김철수','메모');
+
+
+
+
+
+
+
+
+create or replace procedure memo_insert_p(p_writer varchar, p_memo varchar)
+생성       변경                프로시저이름      변수명   자료형
+is
+	임시변수 선언
+begin	실행부
+    insert into memo_memo (writer,memo,post_date) values (p_writer, p_memo, sysdate 
+		테이블		필드명				값		시각
+);
+end;
+/
+
+execute memo_insert_p('김철수','메모');
+execute 프로시저이름(전달할값)
+commit;
+select * from memo_memo;
+
+
+create or replace procedure memo_list_p(v_row out sys_refcursor)
+						커서-레코드 탐색
+					입력매개변수
+					출력매개변수 - 변수명 out 자료형
+is
+begin
+
+	open 커서 for sql명령어
+
+  open v_row for
+    select idx,writer,memo,post_date
+    from memo_memo
+    order by idx desc;
+end;
+/
+select * from user_source where name='MEMO_LIST_P';
+
+
+
+create or replace procedure memo_view_p(v_idx number, v_row out sys_refcursor)
+is
+begin
+  open v_row for
+    select idx,writer,memo,post_date
+    from memo_memo
+    where idx=v_idx;
+end;
+/
+
+
+
+create or replace procedure memo_update_p(p_idx number, p_writer varchar, p_memo varchar)
+is
+begin
+  update memo_memo set writer=p_writer, memo=p_memo where idx=p_idx;
+end;
+/
+
+
+
+create or replace procedure memo_delete_p(p_idx number)
+is
+begin
+  delete from memo_memo where idx=p_idx;
+end;
+/
+
+
+
+	memo 패키지
+	models.py
+
+class Memo(models.Model):
+    idx = models.AutoField(primary_key=True)
+    writer = models.CharField(max_length=50, blank=True, null=True)
+    memo = models.CharField(max_length=2000, blank=True, null=True)
+
+	python manage.py makemigrations
+	python manage.py migrate
+
+
+
+
+
+def list_memo_p(request):
+    try:
+        with cx_Oracle.connect("python/1234@localhost:1521/xe") as conn:
+				아이디/비번@호스트:포트/DB
+            with conn.cursor() as cursor:
+		커서 : 레코드셋
+
+                ref_cursor = conn.cursor()
+			커서 생성
+                cursor.callproc('memo_list_p', [ref_cursor])
+						레코드셋의 주소 전달
+			프로시저 호출
+                rows = ref_cursor.fetchall()
+			리스트로 저장
+    except Exception as e:
+        print(e)
+    return render(request, 'procedure/list_memo_p.html',
+                  {'memoList': rows, 'cnt': len(rows)})
+
+  {% for row in memoList %}
+  <tr>
+    <td>{{row.0}}</td>
+		첫번째 필드
+    <td>{{row.1}}</td>
+    <td><a href="/procedure/view_memo_p?idx={{row.0}}">{{row.2}}</a></td>
+    <td>{{row.3|date:'Y-m-d G:i:s'}}</td>
+    <td><button type="button" onclick="delete_memo('{{row.0}}')">삭제</button></td>
+  </tr>
+  {% endfor %}
+
+    function delete_memo(idx){
+      if(confirm("삭제하시겠습니까?")){
+        location.href="/procedure/delete_memo_p?idx="+idx;
+      }
+    }
+
+
+    <td><a href="/procedure/view_memo_p?idx={{row.0}}">{{row.2}}</a></td>
+
+
+	<a href="주소">링크</a>
+
+	<form method="post">
+		<input name="a">
+	</form>
+	request.POST['a']
+
+
+	/procedure/view_memo_p?idx=5
+
+		url?변수=값&변수=값
+
+                idx = request.GET['idx']
+
+
+
+delete_memo_p?idx=37
+
+
+    <td><button type="button" onclick="delete_memo('{{row.0}}')">삭제</button></td>
+
+
+	delete_memo('5')
+
+    function delete_memo(idx){
+      if(confirm("삭제하시겠습니까?")){
+        location.href="/procedure/delete_memo_p?idx="+5;
+					?idx=5
+      }
+    }
+
+
+
+<form method="post" action="insert_memo_p">
+  {% csrf_token %}
+  이름: <input name="writer">
+  메모: <input name="memo">
+  <input type="submit" value="확인">
+</form>
+
+
+
+def insert_memo_p(request):
+    try:
+        with cx_Oracle.connect("python/1234@localhost:1521/xe") as conn:
+            with conn.cursor() as cursor:
+                writer = request.POST['writer']
+                memo = request.POST['memo']
+                cursor.callproc('memo_insert_p', [writer, memo])
+			프로시저호출  callproc('프로시저이름', [전달값])
+
+create or replace procedure memo_insert_p(p_writer varchar, p_memo varchar)
+is
+begin
+    insert into memo_memo (writer,memo,post_date) values (p_writer, p_memo, sysdate );
+end;
+/
+
+
+
+                conn.commit()
+    except Exception as e:
+        print(e)
+    return redirect('/procedure/list_memo_p')
+
+
+오랜만에 평점 로긴했네ㅋㅋ 킹왕짱 쌈뽕한 영화를 만났습니다 
+
+
+	X	y
+오랜만에 평점 	로긴했네ㅋㅋ
+평점 로긴했네ㅋㅋ	킹왕짱 
+로긴했네ㅋㅋ 킹왕짱  쌈뽕한 
+킹왕짱 쌈뽕한	영화를 
+쌈뽕한 영화를	만났습니다 
+
+
+model=Sequential()
+
+model.add(Embedding(vocab_size,500,input_length=max_len-1)) #단어수,벡터사이즈,입력사이즈
+
+model.add(LSTM(128))
+
+model.add(Dense(vocab_size,activation='softmax'))
+
+adam = Adam(learning_rate=0.01)
+
+model.compile(loss='categorical_crossentropy',optimizer=adam,metrics=['accuracy'])
+
+model.summary()
+
+
+import time
+
+from keras.models import load_model
+
+x_size=len(X)
+
+n=800
+
+for i in range(0,x_size,n):
+
+    print('step ',int(i/n)+1,'/',int(x_size/n))
+
+    X1=X[i:min(i + n, x_size)]
+
+    y1=y[i:min(i + n, x_size)]    
+
+    model.fit(X1,y1,batch_size=64,epochs=30, verbose=1)
+
+    model.save(f'sentence{int(i/n)}.h5')    
+
+    tf.keras.backend.clear_session()
+
+    del model    
+
+    time.sleep(2)
+
+    model = load_model(f'sentence{int(i/n)}.h5')
+
+
+
+
+
+
+
+
+
+
+	1000	1000	1000
+
+	model.fit(...)
+	model.save()
+
+	load_model()
+
+
+import tensorflow as tf
+gpus = tf.config.experimental.list_physical_devices('GPU')
+print(gpus)
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+    except RuntimeError as e:
+        print(e)
+
+
+
+import pandas as pd
+df=pd.read_csv('c:/data/text/ratings_all.csv',encoding='ms949')
+df=df[df['label'] == 1]
+	긍정리뷰
+df=df.sample(frac=1)
+df
+
+
+text='\n'.join(map(str,df['document'].values[11000:13000]))
+text[:100]
+
+sequences=list()
+for line in text.split('\n'): #문장 나누기
+    encoded=t.texts_to_sequences([line])[0] #단어를 숫자로 변환
+    for i in range(1,len(encoded)):
+        sequence=encoded[:i+1]
+        sequences.append(sequence)
+print(len(sequences))  
+
+
+[[51, 855],
+ [51, 855, 2441],
+ [51, 855, 2441, 292],
+ [51, 855, 2441, 292, 30],
+ [51, 855, 2441, 292, 30, 856],
+
+
+
+from keras.models import Sequential
+from keras.layers import Dense,Embedding,LSTM
+from keras.layers import Embedding
+from keras.optimizers import Adam
+model=Sequential()
+model.add(Embedding(vocab_size,500,input_length=max_len-1)) #단어수,벡터사이즈,입력사이즈
+model.add(LSTM(128))
+model.add(Dense(vocab_size,activation='softmax'))
+adam = Adam(learning_rate=0.01)
+model.compile(loss='categorical_crossentropy',optimizer=adam,metrics=['accuracy'])
+model.summary()
+
+
+import time
+from keras.models import load_model
+x_size=len(X)
+n=800
+for i in range(0,x_size,n):
+    print('step ',int(i/n)+1,'/',int(x_size/n))
+    X1=X[i:min(i + n, x_size)]
+    y1=y[i:min(i + n, x_size)]    
+    model.fit(X1,y1,batch_size=64,epochs=30, verbose=1)
+    model.save(f'sentence{int(i/n)}.h5')    
+    tf.keras.backend.clear_session()
+	파라미터 초기화
+    del model    
+    time.sleep(2)
+    model = load_model(f'sentence{int(i/n)}.h5')
+
+
+			model,t,'완전',5
+def sequence_generation(model,t,current_word,n):
+    init_word=current_word
+    sentence=''
+    for _ in range(n):
+        encoded=t.texts_to_sequences([current_word])[0]
+			정수인코딩 텍스트=>정수
+        encoded=pad_sequences([encoded],maxlen=max_len-1,padding='pre')
+			제로패딩
+        pred=model.predict(encoded,verbose=0)
+		모형에 입력
+        result=np.argmax(pred,axis=1)
+        for word,index in t.word_index.items():
+            if index==result:
+                break
+        current_word=current_word+' '+word
+        sentence=sentence +' '+word
+        
+    sentence=init_word+sentence
+    return sentence
+
+
+
+print(sequence_generation(model,t,'완전',5))
+
+		np.float => np.float64
+
+x_4d = x.astype(np.float64).reshape(1, 3, 3, 1)
+
+
+
+#합성곱
+import numpy as np
+w = np.array([2, 1, 5, 3])
+	      3  5  1  2
+x = np.array([2, 8, 3, 7, 1, 2, 0, 4, 5])
+		63 48 49 28 21 20
+#w 배열을 뒤집어서 출력
+w_r = np.flip(w)
+print(w_r)
+#합성곱 계산
+# w_r을 x의 왼쪽 자리에 맞추고 각 인덱스마다 곱한 후 더함
+# 2x3 + 8x5 + 3x1 + 7x2 = 63
+# w_r을 오른쪽으로 한자리 shift하여 곱셈
+for i in range(6):
+    print(np.dot(x[i:i+4], w_r))
+
+w = np.array([2, 1, 5, 3])
+x = np.array([2, 8, 3, 7, 1, 2, 0, 4, 5])
+convolve(x, w, mode='valid')
+
+
+from scipy.signal import correlate
+w = np.array([2, 1, 5, 3])
+x = np.array([2, 8, 3, 7, 1, 2, 0, 4, 5])
+correlate(x, w, mode='valid') #교차상관
+
+
+
+
+
+
+import tensorflow as tf
+#4차원 배열을 사용해야 함
+x = np.array([[1, 2, 3],
+              [4, 5, 6],
+              [7, 8, 9]])
+with tf.device('/CPU:0'):
+    # 입력값: reshape(batch, height, width, channel)              
+    x_4d = x.astype(np.float64).reshape(1, 3, 3, 1) #실수형으로 입력해야 함
+    # 필터(가중치) reshape(height,width,channel,가중치의개수)
+    w_4d = w.reshape(2, 2, 1, 1)
+    #SAME 대문자로 작성해야 함
+    c_out = tf.nn.conv2d(x_4d, w_4d, strides=1, padding='SAME')
+    #  텐서를 넘파이 배열로 변환
+    print(c_out.numpy().reshape(3, 3))
+
+
+model = Sequential()
+model.add(Embedding(vocab_size, 100, input_length = max_len))
+model.add(Conv1D(filters = 64, kernel_size = 5, padding = 'same',activation = 'relu', strides = 1))
+	합성곱층
+	
+model.add(Conv1D(filters = 32, kernel_size = 4, padding = 'same',activation = 'relu', strides = 1))
+model.add(Conv1D(filters = 16, kernel_size = 3, padding = 'same',activation = 'relu', strides = 1))
+model.add(MaxPooling1D(5))
+model.add(Flatten())
+	다차원=>1차원
+model.add(Dense(1, activation='sigmoid'))
+			이진분류 0.0~1.0
+model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics=['acc'])
+
+model.add(Conv1D(filters = 64, kernel_size = 5, activation = 'relu', strides = 2))
+model.add(Conv1D(filters = 32, kernel_size = 4, activation = 'relu', strides = 2))
+model.add(Conv1D(filters = 16, kernel_size = 3, activation = 'relu', strides = 2))
+			padding = 'same'
+			input size == output size
+
+
+
+from konlpy.tag import Komoran
+			Okt
+			Hannanum
+			
+			
+import jpype
+	p=Preprocess1()
+
+class Preprocess1:
+    def __init__(self, word2index_dic='', userdic=None):
+	초기화함수 - 객체 생성, 자동 호출
+
+        self.word_index = None
+        # 형태소 분석기 초기화
+        self.komoran = Komoran(userdic=userdic)
+				사용자
+        # 제외할 품사
+        # 참조 : https://docs.komoran.kr/firststep/postypes.html
+        # 관계언, 기호, 어미, 접미사 제거
+        self.exclusion_tags = [
+            'JKS', 'JKC', 'JKG', 'JKO', 'JKB', 'JKV', 'JKQ',
+            'JX', 'JC',
+            'SF', 'SP', 'SS', 'SE', 'SO',
+            'EP', 'EF', 'EC', 'ETN', 'ETM',
+            'XSN', 'XSV', 'XSA'
+        ]
+
+    # 형태소 분석기
+    def pos(self, sentence):
+        jpype.attachThreadToJVM()
+        return self.komoran.pos(sentence)
+
+    # 불용어 제거 후, 필요한 품사 정보만 가져오기
+    def get_keywords(self, pos, without_tag=False):
+        f = lambda x: x in self.exclusion_tags
+
+		lambda input : output
+
+        word_list = []
+        for p in pos:
+            if f(p[1]) is False:
+		불용어가 아니면 추가
+                word_list.append(p if without_tag is False else p[0])
+        return word_list
+
+
+from chatbot.Preprocess1 import Preprocess1
+
+class Preprocess1:
+    def __init__(self, word2index_dic='', userdic='c:/work/FoodShop/chatbot/data/user_dic.tsv'):
+
+sent = "내일 오전 10시에 짜장면 주문하고 싶어"
+p = Preprocess1(userdic='c:/work/FoodShop/chatbot/data/user_dic.tsv')
+	클래스=>메모리, 객체
+
+pos = p.pos(sent)
+
+   def pos(self, sentence):
+        jpype.attachThreadToJVM()
+        return self.komoran.pos("내일 오전 10시에 짜장면 주문하고 싶어")
+
+keywords = p.get_keywords(pos, without_tag=False)
+print(keywords)
+
+
+
+
+
+# 챗봇에서 사용하는 사전 파일 생성
+from Preprocess1 import Preprocess1
+from tensorflow.keras import preprocessing
+import pickle
+
+
+# 말뭉치 데이터 읽어오기
+def read_corpus_data(filename):
+    with open('c:/work/FoodShop/chatbot/data/corpus.txt' 'r', encoding='utf-8') as f:
+        data = [line.split('\t') for line in f.read().splitlines()]
+    return data
+
+  0		1				2
+[0000,	용기내서 새해인사 했네 이제 연락하지 마세요.		,0]
+
+
+# 말뭉치 데이터 가져오기
+corpus_data = read_corpus_data('c:/work/FoodShop/chatbot/data/corpus.txt')
+# 말뭉치 데이터에서 키워드만 추출해서 사전 리스트 생성
+p = Preprocess1(userdic='c:/work/FoodShop/chatbot/data/user_dic.tsv')
+dict = []
+for c in corpus_data:
+    pos = p.pos(c[1])
+		품사태깅
+    for k in pos:
+        dict.append(k[0])
+# 사전에 사용될 word2index 생성
+# 사전의 첫번째 인덱스에는 OOV(Out-Of-Vocabulary) 사용
+tokenizer = preprocessing.text.Tokenizer(oov_token='OOV')
+tokenizer.fit_on_texts(dict)
+word_index = tokenizer.word_index
+
+	단어 사전
+	짜장면, 1
+	짬뽕, 2
+
+# 단어 인덱스 사전 파일 생성
+f = open("c:/work/FoodShop/chatbot/data/chatbot_dict.bin", "wb")
+						write binary 쓰기, 이진
+try:
+    pickle.dump(word_index, f)
+except Exception as e:
+    print(e)
+finally:
+    f.close()
+print('완료되었습니다.')
+
+
+import pickle
+from chatbot.Preprocess1 import Preprocess1
+
+# 단어 사전 불러오기
+f = open("../data/chatbot_dict.bin", "rb")
+	.. 상위				read binary 
+	.  현재
+
+word_index = pickle.load(f)
+			이진파일 불러오기
+f.close()
+
+sent = "오늘 오후 10시에 짜장면 두개, 탕수육 1개 주문이요"
+# 전처리 객체 생성
+p = Preprocess1(userdic='c:/work/FoodShop/chatbot/data/user_dic.tsv')
+# 형태소분석기 실행
+pos = p.pos(sent)
+# 품사 태그 없이 키워드 출력
+keywords = p.get_keywords(pos, without_tag=True)
+for word in keywords:
+    try:
+        print(word, word_index[word])
+    except KeyError:
+        # 해당 단어가 사전에 없는 경우, OOV 처리
+        print(word, word_index['OOV'])
+
+
+	나는 학교에 간다	=> 5 9 11
+
+    # 키워드를 단어 인덱스 시퀀스로 변환
+    def get_wordidx_sequence(self, keywords):
+        if self.word_index is None: 단어사전에 없으면
+            return []
+        w2i = []
+        for word in keywords:
+            try:
+                w2i.append(self.word_index[word])
+            except KeyError:
+                # 해당 단어가 사전에 없는 경우, OOV 처리
+                w2i.append(self.word_index['OOV'])
+        return w2i
+
+model=Sequential()
+model.add(...)
+model.add(...)
+model.add(...)
+
+
+input_layer = Input(shape=(MAX_SEQ_LEN,))
+embedding_layer = Embedding(VOCAB_SIZE, EMB_SIZE, input_length=MAX_SEQ_LEN)(input_layer)
+dropout_emb = Dropout(rate=dropout_prob)(embedding_layer)
+
+출력 = 모형(입력)
+
+conv1 = Conv1D(
+    filters=128,
+    kernel_size=3,
+    padding='valid',
+    activation=tf.nn.relu)(dropout_emb)
+pool1 = GlobalMaxPool1D()(conv1)
+conv2 = Conv1D(
+    filters=128,
+    kernel_size=4,
+    padding='valid',
+    activation=tf.nn.relu)(dropout_emb)
+pool2 = GlobalMaxPool1D()(conv2)
+conv3 = Conv1D(
+    filters=128,
+    kernel_size=5,
+    padding='valid',
+    activation=tf.nn.relu)(dropout_emb)
+pool3 = GlobalMaxPool1D()(conv3)
+# 3,4,5gram 이후 합치기
+
+	ngram
+	나는 학교에 간다  
+
+concat = concatenate([pool1, pool2, pool3])
+hidden = Dense(128, activation=tf.nn.relu)(concat)
+dropout_hidden = Dropout(rate=dropout_prob)(hidden)
+logits = Dense(5, name='logits')(dropout_hidden)
+predictions = Dense(5, activation=tf.nn.softmax)(logits)
+# 모델 생성
+model = Model(inputs=input_layer, outputs=predictions)
+model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+
+
+
+
+
+2023-08-01 15:10:23.487444: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX AVX2
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2023-08-01 15:10:24.067437: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1616] Created device /job:localhost/replica:0/task:0/device:GPU:0 with 1319 MB memory:  -> device: 0, name: NVIDIA GeForce GTX 1050, pci bus id: 0000:01:00.0, compute capability: 6.1
+Epoch 1/5
+2023-08-01 15:10:27.408318: I tensorflow/stream_executor/cuda/cuda_dnn.cc:384] Loaded cuDNN version 8600
+Could not locate zlibwapi.dll. Please make sure it is in your library path!
+
+
+
+
+
+	java.sun.com
+
+	Conv => MaxPool => Flatten => Dense
+
+
+
+
+
+import pandas as pd
+import tensorflow as tf
+from tensorflow.keras import preprocessing
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Embedding, Dense, Dropout, Conv1D, GlobalMaxPool1D, concatenate
+
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+    except RuntimeError as e:
+        print(e)
+# 데이터 읽어오기
+train_file = "c:/work/FoodShop/chatbot/data/total_train_data.csv"
+data = pd.read_csv(train_file, delimiter=',')
+queries = data['query'].tolist()	텍스트
+intents = data['intent'].tolist()	숫자(0~4)
+from chatbot.Preprocess2 import Preprocess2
+
+p = Preprocess2(word2index_dic='c:/work/FoodShop/chatbot/data/chatbot_dict.bin',
+                userdic='c:/work/FoodShop/chatbot/data/user_dic.tsv')
+# 단어 시퀀스 생성
+sequences = []
+for sentence in queries:
+    pos = p.pos(sentence)
+    keywords = p.get_keywords(pos, without_tag=True)
+    seq = p.get_wordidx_sequence(keywords)
+    sequences.append(seq)
+# 단어 인덱스 시퀀스 벡터
+# 단어 시퀀스 벡터 크기
+from chatbot.GlobalParams import MAX_SEQ_LEN
+
+padded_seqs = preprocessing.sequence.pad_sequences(sequences, maxlen=MAX_SEQ_LEN, padding='post')
+
+	정규표현식, 불용어 처리
+	정수인코딩
+	제로패딩
+
+
+# (105658, 15)
+print(padded_seqs.shape)
+print(len(intents))  # 105658
+# 학습용, 검증용, 테스트용 데이터셋 생성
+# 학습셋:검증셋:테스트셋 = 7:2:1
+ds = tf.data.Dataset.from_tensor_slices((padded_seqs, intents))
+ds = ds.shuffle(len(queries))
+train_size = int(len(padded_seqs) * 0.7)
+val_size = int(len(padded_seqs) * 0.2)
+test_size = int(len(padded_seqs) * 0.1)
+train_ds = ds.take(train_size).batch(20)
+val_ds = ds.skip(train_size).take(val_size).batch(20)
+test_ds = ds.skip(train_size + val_size).take(test_size).batch(20)
+# 하이퍼 파라미터 설정
+dropout_prob = 0.5
+EMB_SIZE = 128
+EPOCH = 5
+VOCAB_SIZE = len(p.word_index) + 1  # 전체 단어 개수
+# CNN 모델 정의
+input_layer = Input(shape=(MAX_SEQ_LEN,))
+embedding_layer = Embedding(VOCAB_SIZE, EMB_SIZE, input_length=MAX_SEQ_LEN)(input_layer)
+dropout_emb = Dropout(rate=dropout_prob)(embedding_layer)
+conv1 = Conv1D(
+    filters=128,
+    kernel_size=3,
+    padding='valid',
+    activation=tf.nn.relu)(dropout_emb)
+pool1 = GlobalMaxPool1D()(conv1)
+conv2 = Conv1D(
+    filters=128,
+    kernel_size=4,
+    padding='valid',
+    activation=tf.nn.relu)(dropout_emb)
+pool2 = GlobalMaxPool1D()(conv2)
+conv3 = Conv1D(
+    filters=128,
+    kernel_size=5,
+    padding='valid',
+    activation=tf.nn.relu)(dropout_emb)
+pool3 = GlobalMaxPool1D()(conv3)
+# 3,4,5gram 이후 합치기
+concat = concatenate([pool1, pool2, pool3])
+hidden = Dense(128, activation=tf.nn.relu)(concat)
+dropout_hidden = Dropout(rate=dropout_prob)(hidden)
+logits = Dense(5, name='logits')(dropout_hidden)
+predictions = Dense(5, activation=tf.nn.softmax)(logits)
+# 모델 생성
+model = Model(inputs=input_layer, outputs=predictions)
+model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+	y 0 / 1 / 2 / 3 / 4
+
+	10000  0
+	01000  1
+	00100  2
+
+
+	sparse_categorical_crossentropy => 원핫인코딩 x
+	categorical_crossentropy => 원핫인코딩 o
+
+
+# 모델 학습
+with tf.device('/GPU:0'):
+    model.fit(train_ds, validation_data=val_ds, epochs=EPOCH, verbose=1)
+# 모델 평가(테스트 데이터 셋 이용)
+with tf.device('/GPU:0'):
+    loss, accuracy = model.evaluate(test_ds, verbose=1)
+    print('Accuracy: %f' % (accuracy * 100))
+    print('loss: %f' % (loss))
+# 모델 저장
+model.save('intent_model.h5')
+print('완료되었습니다.')
+
+	model=IntentModel()
+
+class IntentModel:
+    def __init__(self, model_name, proprocess):
+        # intent 레이블
+        self.labels = {0: "인사", 1: "욕설", 2: "주문", 3: "예약", 4: "기타"}
+        # intent 분류 모델 불러오기
+        self.model = load_model(model_name)
+        # 챗봇 Preprocess 객체
+        self.p = proprocess
+
+    # 의도 클래스 예측
+    def predict_class(self, query):
+        # 형태소 분석
+        pos = self.p.pos(query)
+        # 문장내 키워드 추출(불용어 제거)
+        keywords = self.p.get_keywords(pos, without_tag=True)
+        sequences = [self.p.get_wordidx_sequence(keywords)]
+        # 패딩처리
+        padded_seqs = preprocessing.sequence.pad_sequences(sequences, maxlen=MAX_SEQ_LEN, padding='post')
+        predict = self.model.predict(padded_seqs)
+        predict_class = tf.math.argmax(predict, axis=1)
+        return predict_class.numpy()[0]
+
+
+def count(stop):
+    i = 0
+    while i<stop:
+        yield i
+        i += 1
+    					   함수     
+ds_counter = tf.data.Dataset.from_generator(count, args=[25], output_types=tf.int32, output_shapes = (), )
+
+#take : 해당 batch를 몇 번 불러올지
+		   0,1,,,24
+for count_batch in ds_counter.batch(8).take(2): # batch 2회
+    print(count_batch.numpy())
+
+# skip 횟수 지정, 한번 skip
+for count_batch in ds_counter.batch(8).skip(1).take(2): # batch 10회
+    print(count_batch.numpy())    
+
+
+	train	val	test
+	7	2	1
+	70	20	10
+
+train_size = int(len(padded_seqs) * 0.7)
+val_size = int(len(padded_seqs) * 0.2)
+test_size = int(len(padded_seqs) * 0.1)
+train_ds = ds.take(train_size).batch(20)
+					배치사이즈 20
+val_ds = ds.skip(train_size).take(val_size).batch(20)
+test_ds = ds.skip(train_size + val_size).take(test_size).batch(20)
+
+
+for count_batch in ds_counter.take(2).batch(8): # batch 10회
+    print(count_batch.numpy())    
+
+
+
+from chatbot.Preprocess2 import Preprocess2
+from chatbot.IntentModel import IntentModel
+
+p = Preprocess2(word2index_dic='c:/work/FoodShop/chatbot/data/chatbot_dict.bin',
+                userdic='c:/work/FoodShop/chatbot/data/user_dic.tsv')
+intent = IntentModel(model_name='c:/work/FoodShop/chatbot/model/intent_model.h5', proprocess=p)
+
+items = ['오늘 탕수육 주문 가능한가요?', '여행 가고 싶어요.',
+         '다음주 일요일로 변경가능한가요?', '안녕하세요']
+
+for item in items:
+    predict = intent.predict_class(item)
+    0/1/2/3/4
+    predict_label = intent.labels[predict]
+    print(item)
+    print("의도 예측 클래스 : ", predict)
+    print("의도 예측 레이블 : ", predict_label)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -10,4 +10,6 @@ urlpatterns = [
     path('memo/', include('memo.urls')),
     path('book/', include('book.urls')),
     path('transaction/', include('transaction.urls')),
+    path('procedure/', include('procedure.urls')),
 ]
+

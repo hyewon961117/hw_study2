@@ -1,0 +1,895 @@
+Django 실습	
+	저장 프로시저 실습
+
+텍스트마이닝
+챗봇 만들기
+
+자연어 처리 프로젝트(2차 프로젝트)
+
+from django.db import models
+from datetime import datetime
+
+
+class Emp(models.Model):
+    empno = models.IntegerField(primary_key=True)
+	사번 	숫자		기본키
+    ename = models.CharField(max_length=50, null=False)
+	이름
+    job = models.CharField(max_length=50, null=False)
+	직급
+    hiredate = models.DateTimeField(default=datetime.now)
+	입사일자		날짜시간			기본값 현재 시각
+    sal = models.IntegerField(null=False, default=0)
+	급여		
+
+	급여인상			기본값 0
+    def update_sal(self, sal):
+        self.sal = sal
+
+
+
+
+python manage.py makemigrations
+
+python manage.py migrate
+
+
+select * from tab;
+
+select * from procedure_emp;
+
+
+
+
+
+from procedure import views
+from django.urls import path
+
+urlpatterns = [
+    path('', views.home),
+
+사원 테이블
+    path('list_emp', views.list_emp),
+    path('write_emp', views.write_emp),
+    path('insert_emp', views.insert_emp),
+    path('update_emp', views.update_emp),
+    path('update_emp_p', views.update_emp_p),
+
+
+메모 테이블
+    path('list_memo_p', views.list_memo_p),
+    path('insert_memo_p', views.insert_memo_p),
+    path('view_memo_p', views.view_memo_p),
+    path('delete_memo_p', views.delete_memo_p),
+    path('update_memo_p', views.update_memo_p),
+]
+
+
+	CRUD
+	Create	레코드 추가
+	Read	읽기
+	Update	수정
+	Delete	삭제
+
+
+저장 프로시저
+
+
+p_empno number
+변수명	자료형
+
+create or replace procedure mysal_p(p_empno number)
+생성	변경	프로시저	프로시저이름	파라미터
+is
+	임시변수
+	선언부
+begin
+	실행부
+
+  update procedure_emp
+
+  set sal=sal*1.1
+
+  where empno=p_empno;  
+
+end;
+
+/
+
+insert into procedure_emp values (1,'김철수','대리',sysdate,500);
+						현재 시각
+select * from procedure_emp;  
+
+execute mysal_p(1);  
+실행   프로시저(전달할값)
+
+select * from procedure_emp;
+
+select * from user_source where name='MYSAL_P';
+		데이터 사전		프로시저 이름
+		시스템 테이블
+
+
+
+
+MYSAL_P	PROCEDURE	1	"procedure mysal_p(p_empno number)
+"	1
+MYSAL_P	PROCEDURE	2	"is
+"	1
+MYSAL_P	PROCEDURE	3	"begin
+"	1
+MYSAL_P	PROCEDURE	4	"  update procedure_emp
+"	1
+MYSAL_P	PROCEDURE	5	"  set sal=sal*1.1
+"	1
+MYSAL_P	PROCEDURE	6	"  where empno=p_empno;  
+"	1
+MYSAL_P	PROCEDURE	7	"end;
+"	1
+
+
+
+	sql parser
+
+	sql optimizer
+		실행계획
+
+
+
+	python manage.py runserver
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+  <script>
+    function update_sal(empno,sal){
+      location.href="/procedure/update_emp?empno="+empno+"&sal="+sal;
+    }
+    function update_sal_p(empno){
+      location.href="/procedure/update_emp_p?empno="+empno;
+    }
+  </script>
+</head>
+<body>
+<h2>사원</h2>
+<a href="/procedure/write_emp">사원 추가</a>
+<a href="/procedure">프로시저 메인</a>
+<a href="/">Home</a>
+<table border="1">
+  <tr>
+    <th>사번</th>
+    <th>이름</th>
+    <th>직급</th>
+    <th>입사일자</th>
+    <th>급여</th>
+    <th>&nbsp;</th>
+  </tr>
+
+def list_emp(request):
+    empList = Emp.objects.order_by('ename')
+    return render(request, 'procedure/list_emp.html',
+                  {'empList': empList, 'empCount': len(empList)})
+			key
+  {% for emp in empList %}
+	개별사원
+  <tr>
+    <td>{{emp.empno}}</td>
+    <td>{{emp.ename}}</td>
+    <td>{{emp.job}}</td>
+    <td>{{emp.hiredate|date:'Y-m-d'}}</td>
+			날짜포맷지정
+2020-11-12 2:00:00
+
+    <td>{{emp.sal}}</td>
+    <td>
+    function update_sal(empno,sal){
+      location.href="/procedure/update_emp?empno="+empno+"&sal="+sal;
+    }
+
+def update_emp(request):
+    emp = Emp.objects.get(empno=request.GET['empno'])
+    sal = int(request.GET['sal']) * 1.1
+    emp_new = Emp(empno=emp.empno, ename=emp.ename, job=emp.job, hiredate=emp.hiredate, sal=sal)
+    emp_new.save()
+    return redirect('/procedure/list_emp')
+
+def update_emp_p(request):
+    try:
+        with cx_Oracle.connect("python/1234@localhost:1521/xe") as conn:
+            with conn.cursor() as cursor:
+			레코드 탐색 객체
+                empno = request.GET['empno']
+                cursor.callproc('mysal_p', [empno])
+			저장프로시저   이름    전달값
+                conn.commit()
+    except Exception as e:
+        print(e)
+    return redirect('/procedure/list_emp')
+
+    function update_sal_p(empno){
+      location.href="/procedure/update_emp_p?empno="+empno;
+    }
+
+      <input type="button" value="급여인상" 
+	onclick="update_sal('{{emp.empno}}','{{emp.sal}}')">
+      <input type="button" value="급여인상(프로시저)" onclick="update_sal_p('{{emp.empno}}')">
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+</body>
+</html>
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h2>사원 정보</h2>
+<form method="post" action="insert_emp">
+  {% csrf_token %}
+  <table border="1">
+    <tr>
+      <td>사번</td>
+      <td><input name="empno"></td>		request.POST['empno']
+			변수명
+    </tr>
+    <tr>
+      <td>이름</td>
+      <td><input name="ename"></td>
+    </tr>
+    <tr>
+      <td>직급</td>
+      <td><input name="job"></td>
+    </tr>
+    <tr>
+      <td>입사일자</td>
+      <td><input type="date" name="hiredate"></td>
+    </tr>
+    <tr>
+      <td>급여</td>
+      <td><input type="number" name="sal"></td>
+    </tr>
+    <tr align="center">
+      <td colspan="2">
+        <input type="submit" value="확인">
+      </td>
+    </tr>
+  </table>
+</form>
+</body>
+</html>
+
+def insert_emp(request):
+    emp = Emp(empno=request.POST['empno'], ename=request.POST['ename'],
+              job=request.POST['job'],
+              hiredate=request.POST['hiredate'], sal=request.POST['sal'])
+    emp.save()
+    return redirect('/procedure/list_emp')
+
+
+import glob
+# 긍정리뷰 100개 로딩
+pos_review=(glob.glob("c:/data/imdb/train/pos/*.txt"))[0:100]
+lines_pos=[]
+for i in pos_review:
+    try:
+        f = open(i, 'r')
+        temp = f.readlines()[0]
+        lines_pos.append(temp)
+        f.close()
+    except :
+        continue
+len(lines_pos)
+
+
+from nltk.tokenize import RegexpTokenizer
+from nltk.corpus import stopwords
+import pandas as pd
+tokenizer = RegexpTokenizer('[\w]+') #알파벳, 숫자, _
+stop_words = stopwords.words('english')
+#동시출현 단어 계산
+word_count = {}   #동시출현 빈도가 저장될 dict
+for line in lines_pos:
+    words =  line.lower()
+		소문자로
+    tokens = tokenizer.tokenize(words)
+		단어 나누기
+    #불용어 제거, 불용어에 br 추가
+
+set(tokens)
+중복값 제거
+
+    stopped_tokens = [i for i in list(set(tokens)) if i not in stop_words+["br"]]
+    #글자수가 1인 단어 제외
+    stopped_tokens2 = [i for i in stopped_tokens if len(i)>1]
+    for i, a in enumerate(stopped_tokens2):
+        for b in stopped_tokens2[i+1:]:
+            if a>b:
+                word_count[b, a] = word_count.get((b, a),0) + 1  
+            else :
+                word_count[a, b] = word_count.get((a, b),0) + 1   
+
+
+a=[10,20,30]
+   0  1  2
+	
+
+for i,v in enumerate(a):
+		인덱스,값
+    print(i,v)
+
+
+
+a='aaa' # 97
+b='bbb' # 98
+a>b
+97>98
+
+
+
+('cartoon', 'tried'): 1,
+key		     value
+
+            if a>b:
+                word_count[b, a] = word_count.get((b, a),0) + 1  
+                                                    key  value
+
+		딕셔너리.get(key)
+		딕셔너리.get(key,기본값)
+
+            else :
+                word_count[a, b] = word_count.get((a, b),0) + 1
+
+
+
+
+
+from nltk.corpus import stopwords
+from nltk.tokenize import RegexpTokenizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+tokenizer = RegexpTokenizer('[\w]+')
+				알파벳,숫자,_
+stop_words = stopwords.words('english')
+#TF-IDF 가중치 할당
+vec = TfidfVectorizer(stop_words=stop_words)
+vector_lines_pos = vec.fit_transform(lines_pos)
+print(vector_lines_pos)
+A=vector_lines_pos.toarray()
+print(A.shape)
+print(A)
+#x축 단어, y축 문서
+
+	sparse matrix 희소행렬
+
+  (0, 2632)	0.10430305595720811
+  (0, 1348)	0.10430305595720811
+  (0, 1318)	0.07242968766333299
+  (0, 3580)	0.05164463226548277
+  행   열        value
+
+	dense matrix 밀집행렬 - 모든 값들을 표시
+
+
+
+import numpy as np
+from scipy import sparse
+#밀집행렬(dense array)
+a=np.array([[0.5,0,0],[0,1,0],[0.7,0,1.5]])
+#밀집행렬을 희소행렬(sparse array)로 변환
+#밀집행렬의 단점: 0이 많을 경우 메모리 낭비가 될 수 있음
+#희소행렬은 0이 아닌 값들의 위치와 값만 기록하여 메모리를 절약하는 방식
+b=sparse.csr_matrix(a)  
+print(b)
+# (0,0) 0.5 => 인덱스 0,0에 값 0.5
+# (1,1) 1 => 인덱스 1,1에 값 1
+# (2,0) 0.7 => 인덱스 2,0에 값 0.7
+# (2,2) 1 => 인덱스 2,2에 값 1.5
+c=b.toarray() #희소행렬을 밀집행렬로 변환
+print(c)
+
+for i,row in enumerate(df3.iterrows()):
+			개별행
+    #print(row)
+    a=vec.get_feature_names_out()[row[1][0][0]]
+    b=vec.get_feature_names_out()[row[1][0][1]]
+    print(f'{a},{b}=>{row[1][1]:.2f}')    
+    if i>100:
+        break
+
+
+dense array 밀집행렬
+	[0,0,0,0,0,0,1]	one hot encoding
+
+sparse array 희소행렬
+	(0,6) 1
+
+word2vec : 단어를 벡터로
+	워드임베딩
+doc2vec : 문서를 벡터로
+char2vec : 문자를 벡터로
+
+CBOW  주변 단어로 중심 단어를 예측하는 방법
+
+Skip-gram 중심 단어로 주변 단어를 예측하는 방법(더 많이 사용되는 방법)
+
+
+다음 달부터 경기도 성남시 공원에서 치킨 등을 주문하면 '드론'이 배달하는 서비스가 시작된다.
+
+
+model = Word2Vec(text, vector_size=10, sg=1, window=2, min_count=3)
+
+	단어1개=>숫자 10개
+
+
+	희소행렬 [0,0,0,0,0,0,1]
+	밀집행렬 [1,1,1,1,1,1,0]
+
+	희소표현 (0,6) 1 
+	밀집표현 [0,0,0,0,0,0,1]
+
+
+# word2vec 모형 생성 , sg=1 skip-gram을 적용, window=2 중심 단어로부터 좌우 2개의 단어까지 학습에 적용
+#min_count=3 최소 3회 이상 출현한 단어들을 대상으로 학습
+model = Word2Vec(text, vector_size=10, sg=1, window=2, min_count=3)
+# 두 단어의 유사도 계산
+model.wv.similarity('film', 'movie')
+
+
+ sg=1 skip-gram
+
+
+
+
+
+다음 달부터 경기도 성남시 공원에서 치킨 등을 주문하면 '드론'이 배달하는 서비스가
+다음 달부터 경기도 성남시 공원에서 치킨 등을 주문하면 '드론'이 배달하는 서비스가 시작된다.
+다음 달부터 경기도 성남시 공원에서 치킨 등을 주문하면 '드론'이 배달하는
+다음 달부터 경기도 성남시 공원에서 치킨 등을 주문하면 '드론'이
+다음 달부터 경기도 성남시 공원에서 치킨 등을 주문하면
+
+	제로 패딩
+
+
+embedding_vecor_length = 32 #벡터사이즈
+
+model = Sequential()
+
+#임베딩 레이어 Embedding(단어의개수, 벡터크기, 입력사이즈(최대단어개수))
+
+model.add(Embedding(top_words, embedding_vecor_length, input_length=max_review_length))
+
+#문장을 단어들의 시퀀스로 간주하고 순환 레이어의 입력으로
+
+model.add(LSTM(100)) # Long Short-Term Memory
+
+model.add(Dense(1, activation='sigmoid'))
+				0.0~1.0
+
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+
+
+
+
+
+
+max_review_length = 500 #리뷰의 최대 길이를 500으로 설정
+# 길이가 짧으면 공백으로 채움
+X_train = sequence.pad_sequences(X_train, maxlen=max_review_length)
+						최대 사이즈
+X_test = sequence.pad_sequences(X_test, maxlen=max_review_length)
+			제로패딩
+print(X_train.shape)
+print(X_test.shape)
+print(X_train[0])
+
+
+
+
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.layers import LSTM
+from keras.layers import Embedding
+embedding_vecor_length = 32 #벡터사이즈
+	단어1개=>32벡터
+
+model = Sequential()
+#임베딩 레이어 Embedding(단어의개수, 벡터크기, 입력사이즈(최대단어개수))
+model.add(Embedding(top_words, embedding_vecor_length, input_length=max_review_length))
+model.add(LSTM(100))
+model.add(Dense(1, activation='sigmoid'))
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+model.summary()
+
+
+
+	y
+	0
+	1
+	2
+
+	45
+
+	y
+	1 0 0 0..... 0
+	0 0 0 0..... 1
+
+
+from keras.datasets import reuters
+#로이터 뉴스 데이터 로딩, num_words 사용할 상위 단어수, maxlen  상위 1000개 단어
+(X_train, y_train), (X_test, y_test) = reuters.load_data( num_words=1000,test_split=0.2)
+
+from tensorflow.keras.preprocessing import sequence
+# 가장 긴 길이를 기준으로 사이즈를 맞추고 남는 부분을 0으로 채움
+X_train = sequence.pad_sequences(X_train, maxlen=50)
+X_test = sequence.pad_sequences(X_test, maxlen=50)
+
+
+
+[0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+        0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+        0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+
+
+
+
+from keras.models import Sequential
+from keras.layers import Dense, LSTM, Embedding
+maxlen=50
+model = Sequential()
+#임베딩 레이어 Embedding(단어의개수, 벡터크기, 입력사이즈)
+model.add(Embedding(1000,100, input_length=maxlen)) #1000개의 단어가 입력되어 100차원으로 출력
+model.add(LSTM(100))
+model.add(Dense(46, activation='softmax')) #46개의 뉴스 카테고리
+model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+model.summary()
+
+
+from keras.callbacks import EarlyStopping
+early_stopping=EarlyStopping(patience=3)
+		조기학습종료          기준3회
+hist=model.fit(X_train,y_train,batch_size=128,epochs=100,validation_split=0.2,callbacks=[early_stopping])
+
+import numpy as np
+pred=model.predict(X_test)
+print(pred[12])
+print(np.argmax(pred[12]))
+
+
+[4.96290112e-03 8.22661042e-01 3.36398408e-02 1.67077873e-03
+ 5.53666428e-03 1.53773315e-02 1.92383581e-04 2.21144917e-04
+ 3.44960106e-04 5.48592350e-03 3.03643197e-02 1.35166813e-02
+ 4.38913630e-05 1.79487206e-02 1.49809627e-03 3.90752358e-03
+ 1.85614906e-03 1.05740102e-04 1.08450178e-04 1.41738798e-03
+ 6.24344539e-05 2.75404396e-04 2.60332599e-03 7.87701807e-04
+ 1.81057751e-02 1.86914986e-04 6.79798133e-04 1.79393901e-04
+ 9.65690706e-03 7.51459738e-05 1.39654701e-04 2.08955281e-03
+ 1.24736456e-03 9.56825897e-05 4.35325230e-04 3.28542737e-05
+ 1.80156843e-04 2.44170747e-04 2.49211094e-04 9.38957382e-05
+ 1.57717208e-04 1.24768168e-03 7.31583059e-05 1.86533376e-04
+ 2.30702371e-05 3.11681615e-05]
+
+
+# ham => 0, spam => 1 로 바꾸어 저장
+df['v1'] = df['v1'].replace(['ham','spam'],[0,1])
+df[:5]
+
+
+
+from keras.preprocessing.text import Tokenizer
+#단어 집합을 만들고 단어에 고유한 숫자 인덱스를 부여
+tokenizer = Tokenizer()
+tokenizer.fit_on_texts(X)
+#텍스트를 시퀀스로 변환(단어의 인덱스로만 구성된 새로운 리스트)
+sequences = tokenizer.texts_to_sequences(X)
+print(sequences[:5])
+
+
+
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+#최대 사이즈에 맞추어 빈칸에 0으로 채움
+data = pad_sequences(X_data, maxlen = 77)
+print("학습용 데이터의 크기(shape): ", data.shape)
+print(data[:1])
+
+
+
+from keras.layers import Embedding, Dense, LSTM
+from keras.models import Sequential
+model = Sequential()
+# Embedding(단어수,출력사이즈,최대단어수)
+model.add(Embedding(len(word_to_index)+1, 32, input_length=77))
+		                         벡터수    	입력사이즈
+model.add(LSTM(32)) # Long Short-Term Memory
+model.add(Dense(1, activation='sigmoid'))
+			이진분류
+model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['accuracy'])
+model.summary()
+
+
+[0.11536002904176712, 0.95652174949646]
+	손실			정확도
+
+
+array([[0.9839792 ], => 1
+       [0.02874986], => 0
+       [0.99001384]] => 1, dtype=float32)
+
+
+
+import joblib  
+
+joblib.dump(tokenizer, 'tokenizer.h5')
+
+review_predict('익살스런 연기가 돋보였던 영화')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+mc = ModelCheckpoint('RNN_model.h5', monitor='val_acc', mode='max', verbose=1, save_best_only=True)
+
+#특수문자,기호 제거
+train_data['document'] = train_data['document'].str.replace("[^ㄱ-ㅎㅏ-ㅣ가-힣 ]","")
+train_data[:3]
+	[^...]    [^] not 한글, 공백
+
+
+import numpy as np
+#공백 제거
+train_data['document'] = train_data['document'].str.replace('^ +', "")
+train_data['document'].replace('', np.nan, inplace=True)
+train_data.isnull().sum()
+
+
+
+
+from konlpy.tag import Okt
+okt = Okt()
+X_train = []  
+#형태소 분석
+#for sentence in train_data['document']:
+for sentence in train_data['document'][:10000]:    
+    temp_X = okt.morphs(sentence, stem=True) # 토큰화
+    temp_X = [word for word in temp_X if not word in stopwords] # 불용어 제거
+    X_train.append(temp_X)
+
+
+
+
+# 출현빈도가 3회 미만인 단어들
+threshold = 3
+total_cnt = len(tokenizer.word_index) # 단어수
+rare_cnt = 0
+total_freq = 0
+rare_freq = 0
+for key, value in tokenizer.word_counts.items():
+    total_freq = total_freq + value
+    if(value < threshold):
+        rare_cnt = rare_cnt + 1
+        rare_freq = rare_freq + value
+print(total_cnt) #단어집합 크기
+print(rare_cnt) #희귀단어수
+
+
+
+import joblib
+joblib.dump(tokenizer, 'tokenizer.h5')
+
+
+
+	아주 재미있는 영화입니다. ==> 
+
+
+[[59, 724, 4, 21, 259, 831], [725, 6, 378, 48, 678, 2, 178, 41, 1928, 29, 942, 769, 26], [373, 1613, 3462, 3, 249, 13]]
+
+
+from tensorflow.keras.layers import Embedding, Dense, LSTM
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import load_model
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+model = Sequential()
+model.add(Embedding(vocab_size, 100, 59))
+			단어수   차원(타임스텝)
+	word2vec  단어=>숫자 벡터
+model.add(LSTM(128))
+model.add(Dense(1, activation='sigmoid'))
+model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc'])
+model.summary()
+
+es = EarlyStopping(monitor='val_loss', mode='min', patience=5)
+	조기학습종료	기준		최소
+			    val_acc	    max		횟수
+mc = ModelCheckpoint('RNN_model.h5', monitor='val_acc', mode='max', verbose=1, save_best_only=True)
+	모델백업
+model.fit(X_train, y_train, batch_size = 64, epochs=10, validation_split=0.2, callbacks=[es, mc])
+
+
+
+
+[0.47481995820999146, 0.8112000226974487]
+손실			정확도
+
+
+			연기는 잔잔하게 볼 만 합니다
+def review_predict(new_sentence):
+  new_sentence = okt.morphs(new_sentence, stem=True) # 토큰화
+  new_sentence = [word for word in new_sentence if not word in stopwords] # 불용어 제거
+  encoded = tokenizer.texts_to_sequences([new_sentence]) # 정수 인코딩
+  pad_new = pad_sequences(encoded, maxlen = max_len) # 패딩
+  print(pad_new)
+  score = float(model.predict(pad_new)) # 예측
+  if(score > 0.5):
+    print(f"{score * 100:.2f}% 확률로 긍정 리뷰입니다.\n")
+  else:
+    print(f"{(1 - score) * 100:.2f}% 확률로 부정 리뷰입니다.\n")
+
+
+	text.py
+
+if __name__ == '__main__':
+	현재 파일에서 실행
+    app.run(port=8888, threaded=False)
+	플라스크 앱 실행, port=포트번호	80 다른 숫자 0~65535
+
+
+
+
+
+
+
+
+
+
+
+
+@app.route('/')	 url 패턴		http://localhost/
+def home():  함수
+    return render_template('text/index.html')
+    <form action = "text_result" method = "post">
+					서버에 보낼 때
+			받을주소
+      <textarea name="text" rows="5" cols="80"></textarea>
+		변수명
+      <input type = "submit" value="확인">
+    </form>
+
+
+
+@app.route('/text_result', methods=['POST'])
+def result():
+    text = request.form['text']
+    score = review_predict(text)
+    if (score > 0.5):
+        result = f"{score * 100:.2f}% 확률로 긍정 리뷰입니다."
+    else:
+        result = f"{(1 - score) * 100:.2f}% 확률로 부정 리뷰입니다."
+    return render_template('text/result.html', result=result, review=text)
+						변수=값        변수=값
+
+
+리뷰 내용: {{review}}	{{변수}}
+<br><br>
+<h2>분류 결과: {{result}}</h2>
+
+
+def review_predict(new_sentence):
+    model = load_model('C:/work/kerasweb/RNN_model.h5')
+		신경망 모형
+    tokenizer = joblib.load('C:/work/kerasweb/tokenizer.h5')
+		토크나이저
+    okt = Okt()
+    new_sentence = okt.morphs(new_sentence, stem=True)  # 토큰화
+    stopwords = ['의', '가', '이', '은', '들', '는', '좀', '잘', '걍', '과', '도', '를', '으로', '자', '에', '와', '한', '하다']
+    new_sentence = [word for word in new_sentence if not word in stopwords]  # 불용어 제거
+    encoded = tokenizer.texts_to_sequences([new_sentence])  # 정수 인코딩
+    max_len = 53
+    pad_new = pad_sequences(encoded, maxlen=max_len)  # 패딩
+    score = float(model.predict(pad_new))  # 예측
+    return score
+
+
+
+
+
+
+ This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX AVX2
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2023-07-31 15:46:16.988470: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1616] Created device /job:localhost/replica:0/task:0/device:GPU:0 with 1319 MB memory:  -> device: 0, name: NVIDIA GeForce GTX 1050, pci bus id: 0000:01:00.0, compute capability: 6.1
+Could not locate cublasLt64_10.dll. Please make sure it is in your library path!
+
+
+
+
+
+    zlib 다운로드
+
+    http://www.winimage.com/zLibDll/zlib123dllx64.zip
+
+    압축해제 후
+
+    dll_x64, static_x64 디렉토리 내부의 파일들을
+
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.7\bin 디렉토리에 복사
+
+
+
+
+	익살스런 연기가 돋보였던 영화
+
+
+	X		y
+	익살스런 연기가	돋보였던
+	연기가 돋보였던	영화
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

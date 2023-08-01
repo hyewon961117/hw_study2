@@ -1,0 +1,90 @@
+# function 과 procedure 차이
+function은 return값이 있고
+procedure는 return값이 있어도되고 없어도된다.
+
+### 사원목록 프로시저 만들기
+create or replace procedure mysal_p(p_empno number)
+# 생성	   변경	  프로시저  프로시저이름(변수명 자료형)
+is
+# 임시 변수 / 선언부
+begin
+# 실행부
+  update procedure_emp
+  set sal=sal*1.1
+  where empno=p_empno;  
+end;
+/
+
+insert into procedure_emp values (1,'김철수','대리',sysdate,500);
+select * from procedure_emp;  
+execute mysal_p(1);  # 프로시저를 실행하세요
+select * from procedure_emp;
+select * from user_source where name='MYSAL_P';
+# user_source 데이터사전		
+# 따옴표 안에 들어갈때는 소문자로 만들었어도 대문자로 적어야 인식 가능
+
+sql parser
+sql optimizer
+	실행계획
+
+
+### 메모장 프로시저
+create or replace procedure memo_insert_p(p_writer varchar,p_memo varchar)
+# 생성	  변경		     프로시저이름  변수명   자료형
+is
+# 임시변수 선언
+begin # 실행부
+  insert into memo_memo (writer,memo,post_date)
+  values ( p_writer, p_memo, sysdate);
+end;
+/
+execute memo_insert_p('김철수', '메모');
+commit;
+select * from user_source where name='MEMO_INSERT_P';
+
+
+### 메모목록 프로시저
+
+create or replace procedure memo_list_p(v_row out sys_refcursor)
+					# 커서 - 레코드 탐색
+					# 입력매개변수
+					# 출력매개변수 - 변수형 out 자료형
+is
+begin
+  open v_row for # 아래 세 구문 실행한 결과를 v_row라고 하겠다?
+    select idx,writer,memo,post_date
+    from memo_memo
+    order by idx desc;
+end;
+/
+select * from user_source where name='MEMO_LIST_P';
+
+### 메모상세 
+
+create or replace procedure memo_view_p(v_idx number, v_row out sys_refcursor)
+is
+begin
+  open v_row for
+    select idx,writer,memo,post_date
+    from memo_memo
+    where idx=v_idx;
+end;
+/
+
+### 메모수정
+
+create or replace procedure memo_update_p(p_idx number, p_writer varchar, p_memo varchar)
+is
+begin
+  update memo_memo set writer=p_writer, memo=p_memo where idx=p_idx;
+end;
+/
+
+### 메모삭제
+
+create or replace procedure memo_delete_p(p_idx number)
+is
+begin
+  delete from memo_memo where idx=p_idx;
+end;
+/
